@@ -1,5 +1,10 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore'
-import { getFirebaseFirestore } from '../firebase'
+import {
+  deleteFirestoreRestDocument,
+  getCurrentUserIdToken,
+  getFirestoreRestDocument,
+  listFirestoreRestDocuments,
+  patchFirestoreRestDocument,
+} from '../firebase'
 import type { Guest, RsvpPayload } from '../types/guest'
 import { normalizePhone } from '../utils/phone'
 import { validateRsvp } from '../utils/rsvp'
@@ -21,8 +26,8 @@ function normalizeDraftPhone(phone: string): string {
   return normalizedPhone
 }
 
-function guestDoc(id: string) {
-  return doc(getFirebaseFirestore(), 'guests', id)
+function guestDocPath(id: string): string {
+  return `guests/${id}`
 }
 
 function normalizeGuest(id: string, data: Partial<Guest>): Guest {
@@ -54,19 +59,18 @@ function normalizeGuest(id: string, data: Partial<Guest>): Guest {
 }
 
 async function readGuestById(id: string): Promise<Guest> {
-  const snapshot = await getDoc(guestDoc(id))
-  if (!snapshot.exists()) {
+  const data = await getFirestoreRestDocument(guestDocPath(id), await getCurrentUserIdToken())
+  if (!data) {
     throw new Error('Invite introuvable.')
   }
-  return normalizeGuest(snapshot.id, snapshot.data() as Partial<Guest>)
+  return normalizeGuest(id, data as Partial<Guest>)
 }
 
 export const firestoreGuestStorage: GuestStorage = {
   async listGuests() {
-    const snapshot = await getDocs(collection(getFirebaseFirestore(), 'guests'))
-    return snapshot.docs.map((guestSnapshot) =>
-      normalizeGuest(guestSnapshot.id, guestSnapshot.data() as Partial<Guest>),
-    )
+    const idToken = await getCurrentUserIdToken()
+    const documents = await listFirestoreRestDocuments('guests', idToken)
+    return documents.map((document) => normalizeGuest(document.id, document.data as Partial<Guest>))
   },
 
   async findByPhone(phone) {
@@ -74,10 +78,10 @@ export const firestoreGuestStorage: GuestStorage = {
     if (!normalizedPhone) return null
 
     const id = guestIdFromPhone(normalizedPhone)
-    const snapshot = await getDoc(guestDoc(id))
-    if (!snapshot.exists()) return null
+    const data = await getFirestoreRestDocument(guestDocPath(id), await getCurrentUserIdToken())
+    if (!data) return null
 
-    const guest = normalizeGuest(snapshot.id, snapshot.data() as Partial<Guest>)
+    const guest = normalizeGuest(id, data as Partial<Guest>)
     if (!guest.isActive || guest.normalizedPhone !== normalizedPhone) return null
     return guest
   },
@@ -87,13 +91,17 @@ export const firestoreGuestStorage: GuestStorage = {
     if (!guest.isActive) throw new Error('Invite introuvable.')
 
     const timestamp = nowIso()
-    await updateDoc(guestDoc(guestId), {
+    const update = {
       hasVisited: true,
       firstVisitedAt: guest.firstVisitedAt ?? timestamp,
       lastVisitedAt: timestamp,
       updatedAt: timestamp,
+    }
+    await patchFirestoreRestDocument(guestDocPath(guestId), update, {
+      idToken: await getCurrentUserIdToken(),
+      updateMask: Object.keys(update),
     })
-    return { ...guest, hasVisited: true, firstVisitedAt: guest.firstVisitedAt ?? timestamp, lastVisitedAt: timestamp, updatedAt: timestamp }
+    return { ...guest, ...update }
   },
 
   async submitRsvp(guestId, payload) {
@@ -104,8 +112,7 @@ export const firestoreGuestStorage: GuestStorage = {
     if (!guest.isActive) throw new Error('Invite introuvable.')
 
     const timestamp = nowIso()
-    const nextGuest = {
-      ...guest,
+    const update = {
       ...payload,
       hasValidated: true,
       validatedAt: guest.validatedAt ?? timestamp,
@@ -113,15 +120,11 @@ export const firestoreGuestStorage: GuestStorage = {
       updatedByAdmin: false,
       updatedByPhone: guest.normalizedPhone,
     }
-    await updateDoc(guestDoc(guestId), {
-      ...payload,
-      hasValidated: true,
-      validatedAt: nextGuest.validatedAt,
-      updatedAt: timestamp,
-      updatedByAdmin: false,
-      updatedByPhone: guest.normalizedPhone,
+    await patchFirestoreRestDocument(guestDocPath(guestId), update, {
+      idToken: await getCurrentUserIdToken(),
+      updateMask: Object.keys(update),
     })
-    return nextGuest
+    return { ...guest, ...update }
   },
 
   async upsertGuest(draft, adminPhone) {
@@ -136,16 +139,15 @@ export const firestoreGuestStorage: GuestStorage = {
     const rsvpError = validateRsvp(payload)
     if (rsvpError) throw new Error(rsvpError)
 
+    const idToken = await getCurrentUserIdToken()
     if (draft.id && draft.id !== id) {
-      const duplicate = await getDoc(guestDoc(id))
-      if (duplicate.exists()) throw new Error('Ce telephone existe deja dans la liste.')
-      await deleteDoc(guestDoc(draft.id))
+      const duplicate = await getFirestoreRestDocument(guestDocPath(id), idToken)
+      if (duplicate) throw new Error('Ce telephone existe deja dans la liste.')
+      await deleteFirestoreRestDocument(guestDocPath(draft.id), idToken)
     }
 
-    const currentSnapshot = await getDoc(guestDoc(id))
-    const current = currentSnapshot.exists()
-      ? normalizeGuest(currentSnapshot.id, currentSnapshot.data() as Partial<Guest>)
-      : null
+    const currentData = await getFirestoreRestDocument(guestDocPath(id), idToken)
+    const current = currentData ? normalizeGuest(id, currentData as Partial<Guest>) : null
     const timestamp = nowIso()
     const guest: Guest = {
       id,
@@ -165,24 +167,28 @@ export const firestoreGuestStorage: GuestStorage = {
       ...payload,
     }
 
-    await setDoc(guestDoc(id), guest)
+    await patchFirestoreRestDocument(guestDocPath(id), guest, { idToken })
     return guest
   },
 
   async deactivateGuest(guestId, adminPhone) {
     const guest = await readGuestById(guestId)
     const timestamp = nowIso()
-    await updateDoc(guestDoc(guestId), {
+    const update = {
       isActive: false,
       updatedAt: timestamp,
       updatedByAdmin: true,
       updatedByPhone: adminPhone,
+    }
+    await patchFirestoreRestDocument(guestDocPath(guestId), update, {
+      idToken: await getCurrentUserIdToken(),
+      updateMask: Object.keys(update),
     })
-    return { ...guest, isActive: false, updatedAt: timestamp, updatedByAdmin: true, updatedByPhone: adminPhone }
+    return { ...guest, ...update }
   },
 
   async deleteGuest(guestId) {
-    await deleteDoc(guestDoc(guestId))
+    await deleteFirestoreRestDocument(guestDocPath(guestId), await getCurrentUserIdToken())
   },
 
   async importCsv() {
