@@ -2,16 +2,28 @@ export type WeddingContent = {
   coupleNames: string
   dateLabel: string
   civilLocation: string
+  civilAddress: string
+  civilTime: string
   religiousLocation: string
+  religiousAddress: string
+  religiousTime: string
   receptionLocation: string
+  receptionAddress: string
+  receptionTime: string
 }
 
 const defaultWeddingContent: WeddingContent = {
   coupleNames: 'Prenom 1 & Prenom 2',
   dateLabel: '26 septembre',
   civilLocation: 'Lieu civil a completer',
+  civilAddress: 'Adresse civile a completer',
+  civilTime: 'Heure civile a completer',
   religiousLocation: 'Lieu religieux a completer',
+  religiousAddress: 'Adresse religieuse a completer',
+  religiousTime: 'Heure religieuse a completer',
   receptionLocation: 'Lieu reception a completer',
+  receptionAddress: 'Adresse reception a completer',
+  receptionTime: 'Heure reception a completer',
 }
 
 export const PRIVATE_WEDDING_CONTENT_KEY = 'mariage-daima.privateWeddingContent.v1'

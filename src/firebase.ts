@@ -1,6 +1,6 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
 import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from 'firebase/auth'
-import { doc, getDoc, getFirestore, type Firestore } from 'firebase/firestore'
+import { doc, getDoc, initializeFirestore, type Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -35,7 +35,10 @@ export function getFirebaseFirestore(): Firestore {
   }
 
   firebaseApp ??= initializeApp(firebaseConfig)
-  firestore ??= getFirestore(firebaseApp)
+  firestore ??= initializeFirestore(firebaseApp, {
+    experimentalAutoDetectLongPolling: true,
+    ignoreUndefinedProperties: true,
+  })
   return firestore
 }
 

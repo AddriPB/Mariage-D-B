@@ -18,7 +18,7 @@ service cloud.firestore {
     }
 
     match /guests/{guestId} {
-      allow get: if isAdmin() || resource.data.isActive == true;
+      allow get: if true;
       allow list: if isAdmin();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (

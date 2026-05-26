@@ -181,6 +181,36 @@ h2 {
   gap: 0.45rem;
 }
 
+.event-details {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.event-details h3,
+.event-details p,
+.event-details address {
+  margin: 0;
+}
+
+.event-details h3 {
+  font-size: 1rem;
+}
+
+.event-details time {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.event-details address {
+  color: var(--muted);
+  font-style: normal;
+  line-height: 1.35;
+}
+
 .compact-list span {
   display: grid;
   gap: 0.1rem;
