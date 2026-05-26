@@ -2,7 +2,7 @@
 
 ## Contexte metier
 
-Application web locale pour un mariage precis : invitation numerique, RSVP ferme par telephone, dashboard admin pour le suivi et la gestion de la liste invites.
+Application web pour un mariage precis : invitation numerique, RSVP ferme par telephone, dashboard admin pour le suivi et la gestion de la liste invites.
 
 Le projet est volontairement one-shot. Si un autre mariage existe plus tard, le repo sera clone et adapte manuellement.
 
@@ -11,11 +11,12 @@ Le projet est volontairement one-shot. Si un autre mariage existe plus tard, le 
 - React + Vite + TypeScript.
 - Mobile-first.
 - MVP local exploitable sans secrets Firebase.
-- Persistance locale via `localStorage`.
+- En production, l acces invite et admin passe par Firebase/Firestore.
+- Persistance locale via `localStorage` seulement en fallback dev sans config Firebase.
 - Donnees demo fictives uniquement.
 - Les vrais contenus et donnees restent hors repo.
 - Admins fixes en pratique, sans permissions fines ni console de gestion avancee.
-- Dans le MVP local, un admin est un invite `isAdmin: true`.
+- En production, les admins sont des comptes Firebase Auth + documents `admins/{uid}`.
 - Les fiches `isAdmin` sont exclues des statistiques RSVP et de la liste de suivi invite.
 
 ## Parcours invite
@@ -31,8 +32,8 @@ Le projet est volontairement one-shot. Si un autre mariage existe plus tard, le 
 ## Parcours admin
 
 1. Saisie telephone.
-2. Si telephone admin : demande mot de passe.
-3. Si mot de passe correct : dashboard.
+2. Le telephone admin est transforme en email technique Firebase.
+3. Si le mot de passe Firebase Auth est correct et que `admins/{uid}` existe avec le meme telephone et `isActive: true` : dashboard.
 4. Sinon : message clair.
 5. Le dashboard permet stats, filtres simples et CRUD invites/admins.
 
@@ -67,8 +68,9 @@ Interdiction de stocker dans le repo :
 - `src/components/AccessScreen.tsx` gere l acces par telephone et mot de passe admin.
 - `src/components/RsvpScreen.tsx` gere le formulaire RSVP.
 - `src/components/AdminDashboard.tsx` gere stats, filtres, CRUD et import CSV.
-- `src/storage/guestStorage.ts` contient l implementation `localStorage`.
-- `src/storage/firestoreStorage.todo.ts` reserve le branchement futur Firestore.
+- `src/storage/guestStorage.ts` choisit Firestore si la config Firebase est presente, sinon `localStorage`.
+- `src/storage/firestoreStorage.ts` contient l implementation Firestore.
+- `src/firebase.ts` initialise Firebase Auth/Firestore et gere le login admin.
 - `src/utils/phone.ts` normalise les telephones.
 - `src/utils/stats.ts` calcule les stats dashboard.
 - `src/content/weddingContent.ts` centralise les placeholders mariage et accepte un override prive via `localStorage` ou `src/content/weddingContent.private.local.ts`.
@@ -106,13 +108,51 @@ Guest {
 - Pas de creation invite depuis le parcours public.
 - Pas de vrais secrets ou donnees reelles.
 - Pas de noms reels hardcodes dans le code source.
-- Pas de deploiement.
-- Pas de GitHub push.
+
+## Import invites autorises
+
+Process valide pour ajouter en masse des invites classiques autorises :
+
+1. Source recommandee : CSV local, pas XLSX, pour limiter les erreurs de format et preserver les zeros initiaux.
+2. Fichier source prive ignore par Git : `private/guests.csv`.
+3. Format minimal attendu :
+
+```csv
+phone
+06XXXXXXXX
+07XXXXXXXX
+```
+
+4. Le CSV ne doit contenir que les telephones autorises. Ne jamais ajouter d admin via cet import.
+5. L import doit passer par un script local Node utilisant un service account Firebase local ignore par Git.
+6. Emplacement recommande du service account : `private/firebase-service-account.json`.
+7. Le script doit valider chaque telephone : mobile FR uniquement, `06` ou `07` + 8 chiffres.
+8. Le script doit normaliser en `+33XXXXXXXXX`.
+9. Le document Firestore doit etre cree dans `guests/{telephoneSansPlus}`.
+10. Champs par defaut a ecrire :
+
+```js
+{
+  id: "336XXXXXXXX",
+  phone: "+336XXXXXXXX",
+  normalizedPhone: "+336XXXXXXXX",
+  isAdmin: false,
+  isActive: true,
+  hasVisited: false,
+  hasValidated: false,
+  adultsCount: 0,
+  attendsCivil: false,
+  attendsReligious: false,
+  attendsReception: false
+}
+```
+
+11. Le script doit produire un rapport : importes, doublons, invalides, erreurs.
+12. Les fichiers `private/guests.csv` et `private/firebase-service-account.json` ne doivent jamais etre commites.
 
 ## Prochaine etape possible
 
-1. Tester le MVP local avec les donnees fictives.
-2. Ajuster les textes dans `weddingContent.ts`.
-3. Ajouter des vrais invites uniquement via un fichier local ignore ou via dashboard local.
-4. Brancher Firestore plus tard si le besoin est confirme.
-5. Durcir l authentification avant toute exposition hors machine locale.
+1. Creer le script local `npm run import:guests` pour importer `private/guests.csv` vers Firestore.
+2. Importer les invites classiques autorises via CSV local.
+3. Tester l acces invite sur les telephones de test Firestore.
+4. Ajuster les textes dans `weddingContent.ts` ou via override prive local.
