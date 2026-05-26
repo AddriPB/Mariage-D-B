@@ -15,15 +15,15 @@ export type WeddingContent = {
 const defaultWeddingContent: WeddingContent = {
   coupleNames: 'Prenom 1 & Prenom 2',
   dateLabel: '26 septembre',
-  civilLocation: 'Lieu civil a completer',
-  civilAddress: 'Adresse civile a completer',
-  civilTime: 'Heure civile a completer',
-  religiousLocation: 'Lieu religieux a completer',
-  religiousAddress: 'Adresse religieuse a completer',
-  religiousTime: 'Heure religieuse a completer',
-  receptionLocation: 'Lieu reception a completer',
-  receptionAddress: 'Adresse reception a completer',
-  receptionTime: 'Heure reception a completer',
+  civilLocation: 'Mairie de Champigny-sur-Marne',
+  civilAddress: '14 rue Louis-Talamoni, 94500 Champigny-sur-Marne',
+  civilTime: '10:00h',
+  religiousLocation: 'Mariage religieux',
+  religiousAddress: '381 Rue Marcel Paul, 94500 Champigny-sur-Marne',
+  religiousTime: '15:00h',
+  receptionLocation: 'Réception',
+  receptionAddress: '381 Rue Marcel Paul, 94500 Champigny-sur-Marne',
+  receptionTime: '18:00h',
 }
 
 export const PRIVATE_WEDDING_CONTENT_KEY = 'mariage-daima.privateWeddingContent.v1'
