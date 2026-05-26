@@ -97,6 +97,7 @@ export async function signInAdmin(normalizedPhone: string, password: string): Pr
 
   try {
     credential = await signInWithEmailAndPassword(auth, email, password)
+    await credential.user.getIdToken()
   } catch (error) {
     logAdminAccessError('auth', errorDetails(error))
     throw new AdminAccessError('auth', 'Authentification admin impossible.', { cause: error })
