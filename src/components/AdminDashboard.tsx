@@ -79,7 +79,7 @@ export function AdminDashboard({
     setIsSaving(true)
     try {
       await onSaveGuest(draft)
-      setStatus(draft.id ? 'Invite modifie.' : 'Invite ajoute.')
+      setStatus(draft.id ? 'Invité modifié.' : 'Invité ajouté.')
       setDraft(emptyDraft)
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Sauvegarde impossible.')
@@ -98,27 +98,27 @@ export function AdminDashboard({
       </div>
 
       <div className="stats-grid">
-        <StatCard label="Invites prevus" value={stats.totalInvitedAdults} />
-        <StatCard label="Connectes" value={`${stats.connected} (${stats.connectedPercent}%)`} />
-        <StatCard label="Valides" value={`${stats.validated} (${stats.validatedPercent}%)`} />
-        <StatCard label="Adultes presents" value={stats.adults} />
+        <StatCard label="Invités prévus" value={stats.totalInvitedAdults} />
+        <StatCard label="Connectés" value={`${stats.connected} (${stats.connectedPercent}%)`} />
+        <StatCard label="Validés" value={`${stats.validated} (${stats.validatedPercent}%)`} />
+        <StatCard label="Adultes présents" value={stats.adults} />
       </div>
 
       <div className="grid three">
         <EventCard title="Mariage civil" stats={stats.events.civil} />
         <EventCard title="Mariage religieux" stats={stats.events.religious} />
-        <EventCard title="Reception" stats={stats.events.reception} />
+        <EventCard title="Réception" stats={stats.events.reception} />
       </div>
 
       <section className="panel">
-        <h2>{draft.id ? 'Modifier un invite' : 'Ajouter un invite'}</h2>
+        <h2>{draft.id ? 'Modifier un invité' : 'Ajouter un invité'}</h2>
         <form className="guest-form" onSubmit={handleSave}>
           <label>
-            Telephone
+            Téléphone
             <input value={draft.phone} onChange={(event) => setDraftField('phone', event.target.value, setDraft)} />
           </label>
           <label>
-            Libelle
+            Libellé
             <input value={draft.displayName ?? ''} onChange={(event) => setDraftField('displayName', event.target.value, setDraft)} />
           </label>
           <label>
@@ -153,7 +153,7 @@ export function AdminDashboard({
               checked={Boolean(draft.attendsReception)}
               onChange={(event) => setDraftField('attendsReception', event.target.checked, setDraft)}
             />
-            Reception
+            Réception
           </label>
           <label className="checkbox-label">
             <input
@@ -169,7 +169,7 @@ export function AdminDashboard({
               checked={Boolean(draft.hasValidated)}
               onChange={(event) => setDraftField('hasValidated', event.target.checked, setDraft)}
             />
-            Valide
+            Validé
           </label>
           <div className="form-actions">
             <button disabled={isSaving || Boolean(rsvpError)} type="submit">
@@ -190,14 +190,14 @@ export function AdminDashboard({
       <section className="panel">
         <div className="list-header">
           <div>
-            <h2>Liste invites RSVP</h2>
+            <h2>Liste des invités RSVP</h2>
           </div>
           <div className="filters">
             <button className={filter === 'all' ? 'active secondary' : 'secondary'} onClick={() => setFilter('all')} type="button">
               Tous
             </button>
             <button className={filter === 'notValidated' ? 'active secondary' : 'secondary'} onClick={() => setFilter('notValidated')} type="button">
-              Non valides
+              Non validés
             </button>
           </div>
         </div>
@@ -207,7 +207,7 @@ export function AdminDashboard({
             <article className="guest-card" key={guest.id}>
               <div>
                 <strong>{formatPhoneForDisplay(guest.normalizedPhone)}</strong>
-                <span className="muted small">{guest.hasValidated ? 'Valide' : 'Non valide'}</span>
+                <span className="muted small">{guest.hasValidated ? 'Validé' : 'Non validé'}</span>
               </div>
               <div className="guest-meta">
                 <span>{getGuestTotalPeople(guest)} pers.</span>
@@ -223,7 +223,7 @@ export function AdminDashboard({
                   className="secondary danger"
                   type="button"
                   onClick={() => {
-                    if (window.confirm('Supprimer definitivement cet invite ?')) void onDeleteGuest(guest)
+                    if (window.confirm('Supprimer définitivement cet invité ?')) void onDeleteGuest(guest)
                   }}
                 >
                   Supprimer

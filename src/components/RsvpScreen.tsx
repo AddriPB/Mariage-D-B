@@ -23,7 +23,7 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
   const confirmationText =
     form.adultsCount === 1
       ? 'Merci pour votre venue.'
-      : 'Merci pour votre venue a tous.'
+      : 'Merci pour votre venue à tous.'
 
   function updateNumber(value: string) {
     const nextValue = Number.parseInt(value || '0', 10)
@@ -58,8 +58,8 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
         <div className="confirmation-screen-mark" aria-hidden="true">
           ✓
         </div>
-        <h1>Reponse enregistree</h1>
-        <p>Votre confirmation est bien sauvegardee.</p>
+        <h1>Réponse enregistrée</h1>
+        <p>Votre confirmation est bien sauvegardée.</p>
         <p>{confirmationText}</p>
       </section>
     )
@@ -70,7 +70,7 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
       <form className="stack" onSubmit={handleSubmit}>
         <div className="grid compact-rsvp-grid">
           <label>
-            Nombre d adultes presents
+            Nombre d'adultes présents
             <input
               min="0"
               max={MAX_PEOPLE_PER_GUEST}
@@ -82,7 +82,7 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
         </div>
 
         <fieldset>
-          <legend>Presences</legend>
+          <legend>Présences</legend>
           <Toggle
             label="Mariage civil"
             checked={form.attendsCivil}
@@ -94,20 +94,20 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
             onChange={(checked) => setForm((current) => ({ ...current, attendsReligious: checked }))}
           />
           <Toggle
-            label="Reception"
+            label="Réception"
             checked={form.attendsReception}
             onChange={(checked) => setForm((current) => ({ ...current, attendsReception: checked }))}
           />
         </fieldset>
 
         <div className="recap">
-          <h2>Recapitulatif</h2>
+          <h2>Récapitulatif</h2>
           <p>
             {form.adultsCount} adulte(s).
           </p>
           <p>
             Civil : {form.attendsCivil ? 'oui' : 'non'} · Religieux :{' '}
-            {form.attendsReligious ? 'oui' : 'non'} · Reception :{' '}
+            {form.attendsReligious ? 'oui' : 'non'} · Réception :{' '}
             {form.attendsReception ? 'oui' : 'non'}
           </p>
         </div>
@@ -115,7 +115,7 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
         {error && <p className="error">{error}</p>}
         {validationError && !error && <p className="error">{validationError}</p>}
         <button disabled={Boolean(validationError) || isSaving} type="submit">
-          {isSaving ? 'Enregistrement...' : 'Valider ma reponse'}
+          {isSaving ? 'Enregistrement...' : 'Valider ma réponse'}
         </button>
       </form>
     </section>

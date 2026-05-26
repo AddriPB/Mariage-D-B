@@ -75,7 +75,7 @@ export function shouldUseFirebaseStorage(): boolean {
 
 function getFirebaseAuth(): Auth {
   if (!hasFirebaseConfig()) {
-    throw new Error('Configuration Firebase incomplete.')
+    throw new Error('Configuration Firebase incomplète.')
   }
 
   firebaseApp ??= initializeApp(firebaseConfig)
@@ -85,7 +85,7 @@ function getFirebaseAuth(): Auth {
 
 function getFirebaseProjectId(): string {
   if (!hasFirebaseConfig()) {
-    throw new Error('Configuration Firebase incomplete.')
+    throw new Error('Configuration Firebase incomplète.')
   }
 
   return firebaseConfig.projectId
@@ -300,7 +300,7 @@ export async function signInAdmin(normalizedPhone: string, password: string): Pr
       adminIsActive: adminData?.isActive,
     })
     await signOut(auth)
-    throw new AdminAccessError('admin-validation', 'Compte admin non autorise.')
+    throw new AdminAccessError('admin-validation', 'Compte admin non autorisé.')
   }
 
   return {

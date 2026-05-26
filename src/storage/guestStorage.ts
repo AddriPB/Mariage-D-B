@@ -50,14 +50,14 @@ function ensureUniquePhone(guests: Guest[], normalizedPhone: string, currentId?:
     (guest) => guest.normalizedPhone === normalizedPhone && guest.id !== currentId,
   )
   if (duplicate) {
-    throw new Error('Ce telephone existe deja dans la liste.')
+    throw new Error('Ce téléphone existe déjà dans la liste.')
   }
 }
 
 function normalizeDraftPhone(phone: string): string {
   const normalizedPhone = normalizePhone(phone)
   if (!normalizedPhone) {
-    throw new Error('Telephone invalide. Utilisez un numero mobile francais.')
+    throw new Error('Téléphone invalide. Utilisez un numéro mobile français.')
   }
   return normalizedPhone
 }
@@ -99,7 +99,7 @@ export const localGuestStorage: GuestStorage = {
     const timestamp = nowIso()
     const guests = readGuests()
     const guest = guests.find((item) => item.id === guestId)
-    if (!guest) throw new Error('Invite introuvable.')
+    if (!guest) throw new Error('Invité introuvable.')
 
     guest.hasVisited = true
     guest.firstVisitedAt = guest.firstVisitedAt ?? timestamp
@@ -116,7 +116,7 @@ export const localGuestStorage: GuestStorage = {
     const timestamp = nowIso()
     const guests = readGuests()
     const guest = guests.find((item) => item.id === guestId)
-    if (!guest || !guest.isActive) throw new Error('Invite introuvable.')
+    if (!guest || !guest.isActive) throw new Error('Invité introuvable.')
 
     Object.assign(guest, payload, {
       hasValidated: true,
@@ -153,7 +153,7 @@ export const localGuestStorage: GuestStorage = {
     }
 
     const guest = guests.find((item) => item.id === draft.id)
-    if (!guest) throw new Error('Invite introuvable.')
+    if (!guest) throw new Error('Invité introuvable.')
 
     const nextHasValidated = draft.hasValidated ?? guest.hasValidated
 
@@ -178,7 +178,7 @@ export const localGuestStorage: GuestStorage = {
   async deactivateGuest(guestId, adminPhone) {
     const guests = readGuests()
     const guest = guests.find((item) => item.id === guestId)
-    if (!guest) throw new Error('Invite introuvable.')
+    if (!guest) throw new Error('Invité introuvable.')
     guest.isActive = false
     guest.updatedAt = nowIso()
     guest.updatedByAdmin = true
@@ -199,7 +199,7 @@ export const localGuestStorage: GuestStorage = {
       .filter(Boolean)
 
     if (lines.length <= 1) {
-      return { imported: 0, skipped: 0, errors: ['CSV vide ou sans donnees.'] }
+      return { imported: 0, skipped: 0, errors: ['CSV vide ou sans données.'] }
     }
 
     const headers = lines[0].split(',').map((header) => header.trim())

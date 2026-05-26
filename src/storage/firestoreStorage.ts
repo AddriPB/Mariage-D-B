@@ -21,7 +21,7 @@ function guestIdFromPhone(normalizedPhone: string): string {
 function normalizeDraftPhone(phone: string): string {
   const normalizedPhone = normalizePhone(phone)
   if (!normalizedPhone) {
-    throw new Error('Telephone invalide. Utilisez un numero mobile francais.')
+    throw new Error('Téléphone invalide. Utilisez un numéro mobile français.')
   }
   return normalizedPhone
 }
@@ -33,7 +33,7 @@ function guestDocPath(id: string): string {
 function normalizeGuest(id: string, data: Partial<Guest>): Guest {
   const normalizedPhone = data.normalizedPhone ?? data.phone
   if (!normalizedPhone) {
-    throw new Error('Invite invalide.')
+    throw new Error('Invité invalide.')
   }
 
   return {
@@ -61,7 +61,7 @@ function normalizeGuest(id: string, data: Partial<Guest>): Guest {
 async function readGuestById(id: string): Promise<Guest> {
   const data = await getFirestoreRestDocument(guestDocPath(id), await getCurrentUserIdToken())
   if (!data) {
-    throw new Error('Invite introuvable.')
+    throw new Error('Invité introuvable.')
   }
   return normalizeGuest(id, data as Partial<Guest>)
 }
@@ -106,7 +106,7 @@ export const firestoreGuestStorage: GuestStorage = {
 
   async markVisited(guestId) {
     const guest = await readGuestById(guestId)
-    if (!guest.isActive) throw new Error('Invite introuvable.')
+    if (!guest.isActive) throw new Error('Invité introuvable.')
 
     const timestamp = nowIso()
     const update = {
@@ -127,7 +127,7 @@ export const firestoreGuestStorage: GuestStorage = {
     if (error) throw new Error(error)
 
     const guest = await readGuestById(guestId)
-    if (!guest.isActive) throw new Error('Invite introuvable.')
+    if (!guest.isActive) throw new Error('Invité introuvable.')
 
     const timestamp = nowIso()
     const update = {
@@ -160,7 +160,7 @@ export const firestoreGuestStorage: GuestStorage = {
     const idToken = await getCurrentUserIdToken()
     if (draft.id && draft.id !== id) {
       const duplicate = await getFirestoreRestDocument(guestDocPath(id), idToken)
-      if (duplicate) throw new Error('Ce telephone existe deja dans la liste.')
+      if (duplicate) throw new Error('Ce téléphone existe déjà dans la liste.')
       await deleteFirestoreRestDocument(guestDocPath(draft.id), idToken)
     }
 
@@ -210,6 +210,6 @@ export const firestoreGuestStorage: GuestStorage = {
   },
 
   async importCsv() {
-    throw new Error('Import CSV Firestore non implemente.')
+    throw new Error('Import CSV Firestore non implémenté.')
   },
 }

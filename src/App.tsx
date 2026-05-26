@@ -49,7 +49,7 @@ function App() {
   }
 
   async function handleRsvpSubmit(payload: RsvpPayload) {
-    if (!currentGuest) throw new Error('Session invite introuvable.')
+    if (!currentGuest) throw new Error('Session invité introuvable.')
     const updatedGuest = await guestStorage.submitRsvp(currentGuest.id, payload)
     setCurrentGuest({ ...updatedGuest })
     await refreshGuests()

@@ -1,8 +1,7 @@
 import type { WeddingContent } from './weddingContent'
 
 const privateWeddingContent: Partial<WeddingContent> = {
-  coupleNames: 'Nom du marie & Nom de la mariee',
+  coupleNames: 'Nom du marié & Nom de la mariée',
 }
 
 export default privateWeddingContent
-
