@@ -35,6 +35,9 @@ function App() {
       console.error('[admin-access]', {
         stage: 'list-guests',
         uid: admin.uid,
+        code: typeof error === 'object' && error !== null && 'code' in error
+          ? String((error as { code?: unknown }).code)
+          : undefined,
         message: error instanceof Error ? error.message : String(error),
       })
       throw error

@@ -70,7 +70,25 @@ export const firestoreGuestStorage: GuestStorage = {
   async listGuests() {
     const idToken = await getCurrentUserIdToken()
     const documents = await listFirestoreRestDocuments('guests', idToken)
-    return documents.map((document) => normalizeGuest(document.id, document.data as Partial<Guest>))
+    const guests: Guest[] = []
+    let skippedInvalidGuests = 0
+
+    for (const document of documents) {
+      try {
+        guests.push(normalizeGuest(document.id, document.data as Partial<Guest>))
+      } catch {
+        skippedInvalidGuests += 1
+      }
+    }
+
+    if (skippedInvalidGuests > 0) {
+      console.error('[guest-storage]', {
+        stage: 'list-guests-normalize',
+        skippedInvalidGuests,
+      })
+    }
+
+    return guests
   },
 
   async findByPhone(phone) {
