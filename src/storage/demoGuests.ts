@@ -1,0 +1,52 @@
+import type { Guest } from '../types/guest'
+
+const now = new Date().toISOString()
+
+export const demoGuests: Guest[] = [
+  {
+    id: 'demo-guest-1',
+    phone: '+33612345678',
+    normalizedPhone: '+33612345678',
+    displayName: 'Invite Exemple 1',
+    isAdmin: false,
+    isActive: true,
+    hasVisited: false,
+    hasValidated: false,
+    adultsCount: 1,
+    attendsCivil: false,
+    attendsReligious: false,
+    attendsReception: false,
+    updatedAt: now,
+  },
+  {
+    id: 'demo-guest-2',
+    phone: '+33623456789',
+    normalizedPhone: '+33623456789',
+    displayName: 'Invite Exemple 2',
+    isAdmin: false,
+    isActive: true,
+    hasVisited: false,
+    hasValidated: false,
+    adultsCount: 2,
+    attendsCivil: true,
+    attendsReligious: true,
+    attendsReception: true,
+    updatedAt: now,
+  },
+  {
+    id: 'demo-guest',
+    phone: '+33622222222',
+    normalizedPhone: '+33622222222',
+    displayName: 'Invite Exemple',
+    isActive: true,
+    hasVisited: true,
+    firstVisitedAt: now,
+    lastVisitedAt: now,
+    hasValidated: false,
+    adultsCount: 1,
+    attendsCivil: false,
+    attendsReligious: false,
+    attendsReception: false,
+    updatedAt: now,
+  },
+]
