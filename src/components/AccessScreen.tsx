@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { signInAdmin } from '../firebase'
+import { AdminAccessError, signInAdmin, type AdminProfile } from '../firebase'
 import type { AccessSession, Guest } from '../types/guest'
 import { normalizePhone } from '../utils/phone'
 
 type AccessScreenProps = {
   onGuestAccess: (guest: Guest) => Promise<void>
-  onAdminAccess: (guest: Guest) => void
+  onAdminAccess: (admin: AdminProfile) => Promise<void>
   findByPhone: (phone: string) => Promise<Guest | null>
   session: AccessSession | null
 }
@@ -29,8 +29,8 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
       }
 
       if (password.trim()) {
-        await signInAdmin(normalized, password)
-        onAdminAccess(makeAdminCandidate(normalized))
+        const admin = await signInAdmin(normalized, password)
+        await onAdminAccess(admin)
         return
       }
 
@@ -43,7 +43,16 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
       await onGuestAccess(guest)
     } catch (submitError) {
       if (password.trim()) {
-        setError('Authentification admin impossible.')
+        if (submitError instanceof AdminAccessError) {
+          setError(submitError.message)
+          return
+        }
+
+        console.error('[admin-access]', {
+          stage: 'dashboard',
+          message: submitError instanceof Error ? submitError.message : String(submitError),
+        })
+        setError('Ouverture du dashboard admin impossible.')
         return
       }
       setError(submitError instanceof Error ? submitError.message : 'Acces impossible.')
@@ -89,21 +98,4 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
       {session && <p className="muted small">Session active : {session.kind}</p>}
     </section>
   )
-}
-
-function makeAdminCandidate(normalizedPhone: string): Guest {
-  return {
-    id: `admin-${normalizedPhone}`,
-    phone: normalizedPhone,
-    normalizedPhone,
-    displayName: 'Admin',
-    isAdmin: true,
-    isActive: true,
-    hasVisited: false,
-    hasValidated: false,
-    adultsCount: 0,
-    attendsCivil: false,
-    attendsReligious: false,
-    attendsReception: false,
-  }
 }

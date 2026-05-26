@@ -15,8 +15,33 @@ let firebaseApp: FirebaseApp | null = null
 let firebaseAuth: Auth | null = null
 let firestore: Firestore | null = null
 
+type AdminAccessStage = 'auth' | 'admin-read' | 'admin-validation'
+
+export type AdminProfile = {
+  uid: string
+  phone: string
+}
+
+export class AdminAccessError extends Error {
+  readonly stage: AdminAccessStage
+
+  constructor(
+    stage: AdminAccessStage,
+    message: string,
+    options?: { cause?: unknown },
+  ) {
+    super(message, options)
+    this.name = 'AdminAccessError'
+    this.stage = stage
+  }
+}
+
 export function hasFirebaseConfig(): boolean {
   return Object.values(firebaseConfig).every((value) => typeof value === 'string' && value.length > 0)
+}
+
+export function shouldUseFirebaseStorage(): boolean {
+  return hasFirebaseConfig() || import.meta.env.PROD
 }
 
 function getFirebaseAuth(): Auth {
@@ -52,14 +77,58 @@ function getAdminEmailFromPhone(normalizedPhone: string): string {
   return `admin-${phoneDigits}@${emailDomain}`
 }
 
-export async function signInAdmin(normalizedPhone: string, password: string): Promise<void> {
+function errorDetails(error: unknown): { code?: string; message: string } {
+  return {
+    code: typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code)
+      : undefined,
+    message: error instanceof Error ? error.message : String(error),
+  }
+}
+
+function logAdminAccessError(stage: AdminAccessStage, details: Record<string, unknown>) {
+  console.error('[admin-access]', { stage, ...details })
+}
+
+export async function signInAdmin(normalizedPhone: string, password: string): Promise<AdminProfile> {
   const auth = getFirebaseAuth()
-  const credential = await signInWithEmailAndPassword(auth, getAdminEmailFromPhone(normalizedPhone), password)
-  const adminSnapshot = await getDoc(doc(getFirebaseFirestore(), 'admins', credential.user.uid))
-  const adminData = adminSnapshot.data()
+  const email = getAdminEmailFromPhone(normalizedPhone)
+  let credential: Awaited<ReturnType<typeof signInWithEmailAndPassword>>
+
+  try {
+    credential = await signInWithEmailAndPassword(auth, email, password)
+  } catch (error) {
+    logAdminAccessError('auth', errorDetails(error))
+    throw new AdminAccessError('auth', 'Authentification admin impossible.', { cause: error })
+  }
+
+  let adminSnapshot: Awaited<ReturnType<typeof getDoc>>
+  try {
+    adminSnapshot = await getDoc(doc(getFirebaseFirestore(), 'admins', credential.user.uid))
+  } catch (error) {
+    logAdminAccessError('admin-read', {
+      ...errorDetails(error),
+      uid: credential.user.uid,
+    })
+    await signOut(auth)
+    throw new AdminAccessError('admin-read', 'Lecture du profil admin impossible.', { cause: error })
+  }
+
+  const adminData = adminSnapshot.data() as { phone?: string; isActive?: boolean } | undefined
 
   if (!adminSnapshot.exists() || adminData?.phone !== normalizedPhone || adminData?.isActive !== true) {
+    logAdminAccessError('admin-validation', {
+      uid: credential.user.uid,
+      adminExists: adminSnapshot.exists(),
+      adminPhoneMatches: adminData?.phone === normalizedPhone,
+      adminIsActive: adminData?.isActive,
+    })
     await signOut(auth)
-    throw new Error('Compte admin non autorise.')
+    throw new AdminAccessError('admin-validation', 'Compte admin non autorise.')
+  }
+
+  return {
+    uid: credential.user.uid,
+    phone: normalizedPhone,
   }
 }

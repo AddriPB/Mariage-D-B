@@ -12,7 +12,7 @@ Le projet est volontairement one-shot. Si un autre mariage existe plus tard, le 
 - Mobile-first.
 - MVP local exploitable sans secrets Firebase.
 - En production, l acces invite et admin passe par Firebase/Firestore.
-- Persistance locale via `localStorage` seulement en fallback dev sans config Firebase.
+- Persistance locale via `localStorage` seulement en fallback dev sans config Firebase. En production, une config Firebase manquante doit echouer explicitement.
 - Donnees demo fictives uniquement.
 - Les vrais contenus et donnees restent hors repo.
 - Admins fixes en pratique, sans permissions fines ni console de gestion avancee.
@@ -68,12 +68,12 @@ Interdiction de stocker dans le repo :
 - `src/components/AccessScreen.tsx` gere l acces par telephone et mot de passe admin.
 - `src/components/RsvpScreen.tsx` gere le formulaire RSVP.
 - `src/components/AdminDashboard.tsx` gere stats, filtres, CRUD et import CSV.
-- `src/storage/guestStorage.ts` choisit Firestore si la config Firebase est presente, sinon `localStorage`.
+- `src/storage/guestStorage.ts` choisit Firestore en production; en dev seulement, il utilise `localStorage` si la config Firebase est absente.
 - `src/storage/firestoreStorage.ts` contient l implementation Firestore.
 - `src/firebase.ts` initialise Firebase Auth/Firestore et gere le login admin.
 - `src/utils/phone.ts` normalise les telephones.
 - `src/utils/stats.ts` calcule les stats dashboard.
-- `src/content/weddingContent.ts` centralise les placeholders mariage et accepte un override prive via `localStorage` ou `src/content/weddingContent.private.local.ts`.
+- `src/content/weddingContent.ts` centralise les placeholders mariage et accepte un override prive via `localStorage`; `src/content/weddingContent.private.local.ts` est reserve au dev local et n est pas bundle en production.
 
 ## Modele de donnees
 

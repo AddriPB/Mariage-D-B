@@ -3,6 +3,7 @@ import { AccessScreen } from './components/AccessScreen'
 import { AdminDashboard } from './components/AdminDashboard'
 import { InvitationSection } from './components/InvitationSection'
 import { RsvpScreen } from './components/RsvpScreen'
+import type { AdminProfile } from './firebase'
 import { getInitialGuestsSnapshot, guestStorage } from './storage/guestStorage'
 import type { AccessSession, Guest, GuestDraft, RsvpPayload } from './types/guest'
 
@@ -26,9 +27,22 @@ function App() {
     await refreshGuests()
   }
 
-  function handleAdminAccess(guest: Guest) {
-    setSession({ kind: 'admin', phone: guest.normalizedPhone, guestId: guest.id })
-    setCurrentGuest({ ...guest })
+  async function handleAdminAccess(admin: AdminProfile) {
+    let nextGuests: Guest[]
+    try {
+      nextGuests = await guestStorage.listGuests()
+    } catch (error) {
+      console.error('[admin-access]', {
+        stage: 'list-guests',
+        uid: admin.uid,
+        message: error instanceof Error ? error.message : String(error),
+      })
+      throw error
+    }
+
+    setGuests([...nextGuests])
+    setSession({ kind: 'admin', phone: admin.phone, guestId: admin.uid })
+    setCurrentGuest(null)
   }
 
   async function handleRsvpSubmit(payload: RsvpPayload) {

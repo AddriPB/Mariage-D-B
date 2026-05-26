@@ -1,5 +1,5 @@
 import { demoGuests } from './demoGuests'
-import { hasFirebaseConfig } from '../firebase'
+import { shouldUseFirebaseStorage } from '../firebase'
 import type { Guest, GuestDraft, RsvpPayload } from '../types/guest'
 import { normalizePhone } from '../utils/phone'
 import { validateRsvp } from '../utils/rsvp'
@@ -236,8 +236,8 @@ export const localGuestStorage: GuestStorage = {
   },
 }
 
-export const guestStorage: GuestStorage = hasFirebaseConfig() ? firestoreGuestStorage : localGuestStorage
+export const guestStorage: GuestStorage = shouldUseFirebaseStorage() ? firestoreGuestStorage : localGuestStorage
 
 export function getInitialGuestsSnapshot(): Guest[] {
-  return hasFirebaseConfig() ? [] : getLocalGuestsSnapshot()
+  return shouldUseFirebaseStorage() ? [] : getLocalGuestsSnapshot()
 }

@@ -28,9 +28,9 @@ const defaultWeddingContent: WeddingContent = {
 
 export const PRIVATE_WEDDING_CONTENT_KEY = 'mariage-daima.privateWeddingContent.v1'
 
-const privateContentModules = import.meta.glob<{ default: Partial<WeddingContent> }>(
-  './weddingContent.private.local.ts',
-)
+const privateContentModules = import.meta.env.DEV
+  ? import.meta.glob<{ default: Partial<WeddingContent> }>('./weddingContent.private.local.ts')
+  : {}
 
 function getLocalStorageOverride(): Partial<WeddingContent> {
   if (typeof window === 'undefined') return {}
