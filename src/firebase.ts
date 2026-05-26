@@ -61,7 +61,7 @@ export function getFirebaseFirestore(): Firestore {
 
   firebaseApp ??= initializeApp(firebaseConfig)
   firestore ??= initializeFirestore(firebaseApp, {
-    experimentalAutoDetectLongPolling: true,
+    experimentalForceLongPolling: true,
     ignoreUndefinedProperties: true,
   })
   return firestore
