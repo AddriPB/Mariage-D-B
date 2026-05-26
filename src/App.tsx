@@ -3,16 +3,16 @@ import { AccessScreen } from './components/AccessScreen'
 import { AdminDashboard } from './components/AdminDashboard'
 import { InvitationSection } from './components/InvitationSection'
 import { RsvpScreen } from './components/RsvpScreen'
-import { getLocalGuestsSnapshot, localGuestStorage } from './storage/guestStorage'
+import { getInitialGuestsSnapshot, guestStorage } from './storage/guestStorage'
 import type { AccessSession, Guest, GuestDraft, RsvpPayload } from './types/guest'
 
 function App() {
-  const [guests, setGuests] = useState<Guest[]>(() => getLocalGuestsSnapshot())
+  const [guests, setGuests] = useState<Guest[]>(() => getInitialGuestsSnapshot())
   const [session, setSession] = useState<AccessSession | null>(null)
   const [currentGuest, setCurrentGuest] = useState<Guest | null>(null)
 
   async function refreshGuests() {
-    const nextGuests = await localGuestStorage.listGuests()
+    const nextGuests = await guestStorage.listGuests()
     setGuests([...nextGuests])
     if (session?.guestId) {
       setCurrentGuest(nextGuests.find((guest) => guest.id === session.guestId) ?? null)
@@ -20,7 +20,7 @@ function App() {
   }
 
   async function handleGuestAccess(guest: Guest) {
-    const visitedGuest = await localGuestStorage.markVisited(guest.id)
+    const visitedGuest = await guestStorage.markVisited(guest.id)
     setSession({ kind: 'guest', phone: visitedGuest.normalizedPhone, guestId: visitedGuest.id })
     setCurrentGuest({ ...visitedGuest })
     await refreshGuests()
@@ -33,19 +33,19 @@ function App() {
 
   async function handleRsvpSubmit(payload: RsvpPayload) {
     if (!currentGuest) throw new Error('Session invite introuvable.')
-    const updatedGuest = await localGuestStorage.submitRsvp(currentGuest.id, payload)
+    const updatedGuest = await guestStorage.submitRsvp(currentGuest.id, payload)
     setCurrentGuest({ ...updatedGuest })
     await refreshGuests()
     return updatedGuest
   }
 
   async function handleSaveGuest(draft: GuestDraft) {
-    await localGuestStorage.upsertGuest(draft, session?.phone)
+    await guestStorage.upsertGuest(draft, session?.phone)
     await refreshGuests()
   }
 
   async function handleDeleteGuest(guest: Guest) {
-    await localGuestStorage.deleteGuest(guest.id)
+    await guestStorage.deleteGuest(guest.id)
     await refreshGuests()
   }
 
@@ -53,7 +53,7 @@ function App() {
     <main className="app-shell">
       {!session && (
         <AccessScreen
-          findByPhone={localGuestStorage.findByPhone}
+          findByPhone={guestStorage.findByPhone}
           onGuestAccess={handleGuestAccess}
           onAdminAccess={handleAdminAccess}
           session={session}

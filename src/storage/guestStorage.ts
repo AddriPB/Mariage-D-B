@@ -1,7 +1,9 @@
 import { demoGuests } from './demoGuests'
+import { hasFirebaseConfig } from '../firebase'
 import type { Guest, GuestDraft, RsvpPayload } from '../types/guest'
 import { normalizePhone } from '../utils/phone'
 import { validateRsvp } from '../utils/rsvp'
+import { firestoreGuestStorage } from './firestoreStorage'
 
 const STORAGE_KEY = 'mariage-daima.guests.v1'
 
@@ -232,4 +234,10 @@ export const localGuestStorage: GuestStorage = {
 
     return { imported, skipped, errors }
   },
+}
+
+export const guestStorage: GuestStorage = hasFirebaseConfig() ? firestoreGuestStorage : localGuestStorage
+
+export function getInitialGuestsSnapshot(): Guest[] {
+  return hasFirebaseConfig() ? [] : getLocalGuestsSnapshot()
 }

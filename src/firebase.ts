@@ -15,7 +15,7 @@ let firebaseApp: FirebaseApp | null = null
 let firebaseAuth: Auth | null = null
 let firestore: Firestore | null = null
 
-function hasFirebaseConfig(): boolean {
+export function hasFirebaseConfig(): boolean {
   return Object.values(firebaseConfig).every((value) => typeof value === 'string' && value.length > 0)
 }
 
@@ -29,7 +29,7 @@ function getFirebaseAuth(): Auth {
   return firebaseAuth
 }
 
-function getFirebaseFirestore(): Firestore {
+export function getFirebaseFirestore(): Firestore {
   if (!hasFirebaseConfig()) {
     throw new Error('Configuration Firebase incomplete.')
   }

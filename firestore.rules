@@ -18,7 +18,30 @@ service cloud.firestore {
     }
 
     match /guests/{guestId} {
-      allow read, create, update, delete: if isAdmin();
+      allow get: if isAdmin() || resource.data.isActive == true;
+      allow list: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        resource.data.isActive == true
+        && request.resource.data.phone == resource.data.phone
+        && request.resource.data.normalizedPhone == resource.data.normalizedPhone
+        && request.resource.data.isAdmin == resource.data.isAdmin
+        && request.resource.data.isActive == resource.data.isActive
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'hasVisited',
+          'firstVisitedAt',
+          'lastVisitedAt',
+          'hasValidated',
+          'validatedAt',
+          'updatedAt',
+          'updatedByAdmin',
+          'updatedByPhone',
+          'adultsCount',
+          'attendsCivil',
+          'attendsReligious',
+          'attendsReception'
+        ])
+      );
     }
 
     match /rsvps/{rsvpId} {
