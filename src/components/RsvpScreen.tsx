@@ -23,6 +23,7 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
     attendsReligious: guest.attendsReligious,
     attendsReception: guest.attendsReception,
   })
+  const [adultsInput, setAdultsInput] = useState(String(guest.adultsCount || ''))
   const [error, setError] = useState('')
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>('idle')
   const [isSaving, setIsSaving] = useState(false)
@@ -50,15 +51,22 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
   }, [confirmationState])
 
   function updateNumber(value: string) {
-    const nextValue = Number.parseInt(value || '0', 10)
-    setForm((current) => ({ ...current, adultsCount: Number.isNaN(nextValue) ? 0 : nextValue }))
+    if (value === '') {
+      setAdultsInput('')
+      setForm((current) => ({ ...current, adultsCount: 0 }))
+      return
+    }
+
+    const nextValue = Number.parseInt(value, 10)
+    const normalizedValue = Number.isNaN(nextValue) ? 0 : nextValue
+    setAdultsInput(String(normalizedValue))
+    setForm((current) => ({ ...current, adultsCount: normalizedValue }))
   }
 
   function adjustAdults(delta: number) {
-    setForm((current) => ({
-      ...current,
-      adultsCount: Math.min(MAX_PEOPLE_PER_GUEST, Math.max(0, current.adultsCount + delta)),
-    }))
+    const nextAdultsCount = Math.min(MAX_PEOPLE_PER_GUEST, Math.max(0, form.adultsCount + delta))
+    setAdultsInput(String(nextAdultsCount))
+    setForm((current) => ({ ...current, adultsCount: nextAdultsCount }))
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -140,7 +148,7 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
               max={MAX_PEOPLE_PER_GUEST}
               inputMode="numeric"
               type="number"
-              value={form.adultsCount}
+              value={adultsInput}
               onChange={(event) => updateNumber(event.target.value)}
               aria-describedby={validationError || error ? 'rsvp-error' : undefined}
             />
