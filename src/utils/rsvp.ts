@@ -3,8 +3,8 @@ import type { Guest, RsvpPayload } from '../types/guest'
 export const MAX_PEOPLE_PER_GUEST = 20
 
 export function validateRsvp(payload: RsvpPayload): string | null {
-  if (!Number.isInteger(payload.adultsCount) || payload.adultsCount <= 0) {
-    return "Le nombre d'adultes présents doit être supérieur à 0."
+  if (!Number.isInteger(payload.adultsCount) || payload.adultsCount < 0) {
+    return "Le nombre d'adultes doit être positif."
   }
 
   if (payload.adultsCount > MAX_PEOPLE_PER_GUEST) {

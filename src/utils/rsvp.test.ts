@@ -23,15 +23,4 @@ describe('validateRsvp', () => {
       }),
     ).toContain('20')
   })
-
-  it('refuse un RSVP sans adulte présent', () => {
-    expect(
-      validateRsvp({
-        adultsCount: 0,
-        attendsCivil: true,
-        attendsReligious: false,
-        attendsReception: true,
-      }),
-    ).toContain('supérieur à 0')
-  })
 })
