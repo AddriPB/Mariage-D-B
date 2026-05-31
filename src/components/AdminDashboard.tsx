@@ -33,6 +33,7 @@ export function AdminDashboard({
   const [draft, setDraft] = useState<GuestDraft>(emptyDraft)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
+  const [showValidationError, setShowValidationError] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   const stats = useMemo(() => buildDashboardStats(guests), [guests])
@@ -53,6 +54,7 @@ export function AdminDashboard({
   function editGuest(guest: Guest) {
     setError('')
     setStatus('')
+    setShowValidationError(false)
     setDraft({
       id: guest.id,
       phone: guest.normalizedPhone,
@@ -71,14 +73,17 @@ export function AdminDashboard({
     setDraft(emptyDraft)
     setError('')
     setStatus('')
+    setShowValidationError(false)
   }
 
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setStatus('')
     setError('')
+    setShowValidationError(false)
 
     if (rsvpError) {
+      setShowValidationError(true)
       setError(rsvpError)
       return
     }
@@ -88,6 +93,7 @@ export function AdminDashboard({
       await onSaveGuest(draft)
       setStatus(draft.id ? 'Invité modifié.' : 'Invité ajouté.')
       setDraft(emptyDraft)
+      setShowValidationError(false)
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Sauvegarde impossible.')
     } finally {
@@ -131,6 +137,7 @@ export function AdminDashboard({
               autoComplete="tel"
               value={draft.phone}
               onChange={(event) => setDraftField('phone', event.target.value, setDraft)}
+              aria-describedby={(showValidationError && rsvpError) || error ? 'admin-form-error' : undefined}
             />
           </label>
           <label htmlFor="admin-guest-label">
@@ -151,6 +158,7 @@ export function AdminDashboard({
               inputMode="numeric"
               value={draft.adultsCount ?? 0}
               onChange={(event) => setDraftField('adultsCount', Number(event.target.value), setDraft)}
+              aria-describedby={(showValidationError && rsvpError) || error ? 'admin-form-error' : undefined}
             />
           </label>
           <div className="checkbox-grid">
@@ -181,7 +189,7 @@ export function AdminDashboard({
             />
           </div>
           <div className="form-actions">
-            <button className="primary-action" disabled={isSaving || Boolean(rsvpError)} type="submit">
+            <button className="primary-action" disabled={isSaving} type="submit">
               {isSaving ? 'Sauvegarde...' : draft.id ? 'Enregistrer' : 'Ajouter'}
             </button>
             {draft.id && (
@@ -191,8 +199,10 @@ export function AdminDashboard({
             )}
           </div>
         </form>
-        {rsvpError && <p className="error" role="alert">{rsvpError}</p>}
-        {error && <p className="error" role="alert">{error}</p>}
+        {showValidationError && rsvpError && !error && (
+          <p className="error" id="admin-form-error" role="alert">{rsvpError}</p>
+        )}
+        {error && <p className="error" id="admin-form-error" role="alert">{error}</p>}
         {status && <p className="success" role="status">{status}</p>}
       </section>
 

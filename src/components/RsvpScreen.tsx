@@ -25,6 +25,7 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
   })
   const [adultsInput, setAdultsInput] = useState(String(guest.adultsCount || ''))
   const [error, setError] = useState('')
+  const [showValidationError, setShowValidationError] = useState(false)
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>('idle')
   const [isSaving, setIsSaving] = useState(false)
 
@@ -54,6 +55,7 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
     if (value === '') {
       setAdultsInput('')
       setForm((current) => ({ ...current, adultsCount: 0 }))
+      setError('')
       return
     }
 
@@ -61,12 +63,14 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
     const normalizedValue = Number.isNaN(nextValue) ? 0 : nextValue
     setAdultsInput(String(normalizedValue))
     setForm((current) => ({ ...current, adultsCount: normalizedValue }))
+    setError('')
   }
 
   function adjustAdults(delta: number) {
     const nextAdultsCount = Math.min(MAX_PEOPLE_PER_GUEST, Math.max(0, form.adultsCount + delta))
     setAdultsInput(String(nextAdultsCount))
     setForm((current) => ({ ...current, adultsCount: nextAdultsCount }))
+    setError('')
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -76,10 +80,12 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
 
     const localError = validateRsvp(form)
     if (localError) {
+      setShowValidationError(true)
       setError(localError)
       return
     }
 
+    setShowValidationError(false)
     setIsSaving(true)
     try {
       await onSubmit(form)
@@ -150,7 +156,7 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
               type="number"
               value={adultsInput}
               onChange={(event) => updateNumber(event.target.value)}
-              aria-describedby={validationError || error ? 'rsvp-error' : undefined}
+              aria-describedby={(showValidationError && validationError) || error ? 'rsvp-error' : undefined}
             />
             <button
               aria-label="Ajouter un adulte"
@@ -199,12 +205,12 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
             {error}
           </p>
         )}
-        {validationError && !error && (
+        {showValidationError && validationError && !error && (
           <p className="error" id="rsvp-error" role="alert">
             {validationError}
           </p>
         )}
-        <button className="primary-action" disabled={Boolean(validationError) || isSaving} type="submit">
+        <button className="primary-action" disabled={isSaving} type="submit">
           {isSaving ? 'Enregistrement...' : 'Valider ma réponse'}
         </button>
       </form>

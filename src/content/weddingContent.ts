@@ -13,7 +13,7 @@ export type WeddingContent = {
 }
 
 const defaultWeddingContent: WeddingContent = {
-  coupleNames: 'Daïma Kalembu & Bénédicte Midhero',
+  coupleNames: 'Prénom 1 & Prénom 2',
   dateLabel: '26 septembre',
   civilLocation: 'Mairie de Champigny-sur-Marne',
   civilAddress: '14 rue Louis-Talamoni, 94500 Champigny-sur-Marne',
