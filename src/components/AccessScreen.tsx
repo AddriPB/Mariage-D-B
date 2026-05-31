@@ -18,6 +18,17 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
   const [isLoading, setIsLoading] = useState(false)
 
   const isAdminPasswordStep = Boolean(adminPhone)
+  const submitLabel = isLoading
+    ? 'Vérification...'
+    : isAdminPasswordStep
+      ? 'Ouvrir le dashboard'
+      : 'Continuer'
+
+  function resetAdminStep() {
+    setAdminPhone('')
+    setPassword('')
+    setError('')
+  }
 
   async function handleAccessSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -50,6 +61,12 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
       }
 
       const guest = await findByPhone(normalized)
+      if (!guest && import.meta.env.PROD) {
+        setAdminPhone(normalized)
+        setPassword('')
+        return
+      }
+
       if (!guest) {
         setError("Ce téléphone n'est pas autorisé.")
         return
@@ -83,47 +100,77 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
   }
 
   return (
-    <section className="panel access-panel">
-      <h1>Identification</h1>
-      <p className="muted">
-        Saisissez votre téléphone pour continuer.
-      </p>
+    <section className="access-screen" aria-labelledby="access-title">
+      <div className="access-hero" aria-hidden="true">
+        <span className="hero-kicker">RSVP</span>
+        <span className="hero-line" />
+        <span className="hero-date">Mariage</span>
+      </div>
 
-      <form className="stack" onSubmit={handleAccessSubmit}>
-        <label>
-          Téléphone
-          <input
-            inputMode="tel"
-            autoComplete="tel"
-            value={phone}
-            onChange={(event) => {
-              setPhone(event.target.value)
-              setPassword('')
-              setAdminPhone('')
-              setError('')
-            }}
-            placeholder="06 06 06 06 06"
-          />
-        </label>
+      <section className="surface-panel access-panel">
+        <div className="section-heading">
+          <p className="eyebrow">Invitation privée</p>
+          <h1 id="access-title">Bienvenue</h1>
+          <p className="muted">
+            Entrez le téléphone associé à votre invitation.
+          </p>
+        </div>
+
         {isAdminPasswordStep && (
-          <label>
+          <div className="notice" role="status">
+            Accès admin détecté. Confirmez avec le mot de passe Firebase.
+          </div>
+        )}
+
+        <form className="stack" onSubmit={handleAccessSubmit} aria-busy={isLoading}>
+          <label htmlFor="guest-phone">
+            Téléphone
+            <input
+              id="guest-phone"
+              inputMode="tel"
+              autoComplete="tel"
+              value={phone}
+              onChange={(event) => {
+                setPhone(event.target.value)
+                resetAdminStep()
+              }}
+              placeholder="06 06 06 06 06"
+              aria-describedby={error ? 'access-error' : undefined}
+            />
+          </label>
+        {isAdminPasswordStep && (
+          <label htmlFor="admin-password">
             Mot de passe admin
             <input
+              id="admin-password"
               type="password"
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Mot de passe admin"
+              aria-describedby={error ? 'access-error' : undefined}
             />
           </label>
         )}
-        <button disabled={isLoading} type="submit">
-          {isLoading ? 'Vérification...' : isAdminPasswordStep ? 'Ouvrir le dashboard' : 'Continuer'}
-        </button>
-      </form>
+          <div className="form-actions">
+            <button className="primary-action" disabled={isLoading} type="submit">
+              {submitLabel}
+            </button>
+            {isAdminPasswordStep && (
+              <button className="secondary" type="button" onClick={resetAdminStep}>
+                Changer de téléphone
+              </button>
+            )}
+          </div>
+        </form>
 
-      {error && <p className="error">{error}</p>}
-      {session && <p className="muted small">Session active : {session.kind}</p>}
+        {error && (
+          <p className="error" id="access-error" role="alert">
+            {error}
+          </p>
+        )}
+        {session && <p className="muted small">Session active : {session.kind}</p>}
+      </section>
     </section>
   )
 }

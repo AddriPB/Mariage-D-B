@@ -11,12 +11,14 @@ type EventDetailsProps = {
 function EventDetails({ title, time, location, address }: EventDetailsProps) {
   return (
     <article className="event-details">
-      <div>
+      <div className="event-time" aria-label={`Horaire ${title}`}>
+        {time}
+      </div>
+      <div className="event-copy">
         <h3>{title}</h3>
         <p>{location}</p>
+        <address>{address}</address>
       </div>
-      <time>{time}</time>
-      <address>{address}</address>
     </article>
   )
 }
@@ -35,9 +37,12 @@ export function InvitationSection() {
   }, [])
 
   return (
-    <section className="panel invitation-panel">
-      <h2>{weddingContent.coupleNames}</h2>
-      <p className="date-label">{weddingContent.dateLabel}</p>
+    <section className="invitation-panel" aria-labelledby="invitation-title">
+      <div className="invitation-heading">
+        <p className="eyebrow">Célébration</p>
+        <h2 id="invitation-title">{weddingContent.coupleNames}</h2>
+        <p className="date-label">{weddingContent.dateLabel}</p>
+      </div>
       <div className="event-list">
         <EventDetails
           title="Mariage civil"

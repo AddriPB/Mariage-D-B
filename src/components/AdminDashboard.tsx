@@ -41,6 +41,7 @@ export function AdminDashboard({
     if (filter === 'notValidated') return active.filter((guest) => !guest.hasValidated)
     return active
   }, [filter, guests])
+  const hasVisibleGuests = visibleGuests.length > 0
 
   const rsvpError = validateRsvp({
     adultsCount: draft.adultsCount ?? 0,
@@ -66,6 +67,12 @@ export function AdminDashboard({
     })
   }
 
+  function resetDraft() {
+    setDraft(emptyDraft)
+    setError('')
+    setStatus('')
+  }
+
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setStatus('')
@@ -89,13 +96,13 @@ export function AdminDashboard({
   }
 
   return (
-    <section className="dashboard">
-      <div className="screen-header">
+    <section className="dashboard" aria-labelledby="admin-title">
+      <header className="dashboard-header">
         <div>
           <p className="eyebrow">Dashboard admin</p>
-          <h1>Suivi RSVP</h1>
+          <h1 id="admin-title">Suivi RSVP</h1>
         </div>
-      </div>
+      </header>
 
       <div className="stats-grid">
         <StatCard label="Invités prévus" value={stats.totalInvitedAdults} />
@@ -104,95 +111,98 @@ export function AdminDashboard({
         <StatCard label="Adultes présents" value={stats.adults} />
       </div>
 
-      <div className="grid three">
+      <div className="event-grid">
         <EventCard title="Mariage civil" stats={stats.events.civil} />
         <EventCard title="Mariage religieux" stats={stats.events.religious} />
         <EventCard title="Réception" stats={stats.events.reception} />
       </div>
 
-      <section className="panel">
-        <h2>{draft.id ? 'Modifier un invité' : 'Ajouter un invité'}</h2>
+      <section className="surface-panel admin-form-panel" aria-labelledby="guest-form-title">
+        <div className="section-heading">
+          <p className="eyebrow">Gestion</p>
+          <h2 id="guest-form-title">{draft.id ? 'Modifier un invité' : 'Ajouter un invité'}</h2>
+        </div>
         <form className="guest-form" onSubmit={handleSave}>
-          <label>
+          <label htmlFor="admin-guest-phone">
             Téléphone
-            <input value={draft.phone} onChange={(event) => setDraftField('phone', event.target.value, setDraft)} />
+            <input
+              id="admin-guest-phone"
+              inputMode="tel"
+              autoComplete="tel"
+              value={draft.phone}
+              onChange={(event) => setDraftField('phone', event.target.value, setDraft)}
+            />
           </label>
-          <label>
+          <label htmlFor="admin-guest-label">
             Libellé
-            <input value={draft.displayName ?? ''} onChange={(event) => setDraftField('displayName', event.target.value, setDraft)} />
+            <input
+              id="admin-guest-label"
+              value={draft.displayName ?? ''}
+              onChange={(event) => setDraftField('displayName', event.target.value, setDraft)}
+            />
           </label>
-          <label>
+          <label htmlFor="admin-guest-adults">
             Adultes
             <input
+              id="admin-guest-adults"
               type="number"
               min="0"
               max={MAX_PEOPLE_PER_GUEST}
+              inputMode="numeric"
               value={draft.adultsCount ?? 0}
               onChange={(event) => setDraftField('adultsCount', Number(event.target.value), setDraft)}
             />
           </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
+          <div className="checkbox-grid">
+            <AdminCheckbox
+              label="Civil"
               checked={Boolean(draft.attendsCivil)}
-              onChange={(event) => setDraftField('attendsCivil', event.target.checked, setDraft)}
+              onChange={(checked) => setDraftField('attendsCivil', checked, setDraft)}
             />
-            Civil
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
+            <AdminCheckbox
+              label="Religieux"
               checked={Boolean(draft.attendsReligious)}
-              onChange={(event) => setDraftField('attendsReligious', event.target.checked, setDraft)}
+              onChange={(checked) => setDraftField('attendsReligious', checked, setDraft)}
             />
-            Religieux
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
+            <AdminCheckbox
+              label="Réception"
               checked={Boolean(draft.attendsReception)}
-              onChange={(event) => setDraftField('attendsReception', event.target.checked, setDraft)}
+              onChange={(checked) => setDraftField('attendsReception', checked, setDraft)}
             />
-            Réception
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
+            <AdminCheckbox
+              label="Admin"
               checked={Boolean(draft.isAdmin)}
-              onChange={(event) => setDraftField('isAdmin', event.target.checked, setDraft)}
+              onChange={(checked) => setDraftField('isAdmin', checked, setDraft)}
             />
-            Admin
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
+            <AdminCheckbox
+              label="Validé"
               checked={Boolean(draft.hasValidated)}
-              onChange={(event) => setDraftField('hasValidated', event.target.checked, setDraft)}
+              onChange={(checked) => setDraftField('hasValidated', checked, setDraft)}
             />
-            Validé
-          </label>
+          </div>
           <div className="form-actions">
-            <button disabled={isSaving || Boolean(rsvpError)} type="submit">
+            <button className="primary-action" disabled={isSaving || Boolean(rsvpError)} type="submit">
               {isSaving ? 'Sauvegarde...' : draft.id ? 'Enregistrer' : 'Ajouter'}
             </button>
             {draft.id && (
-              <button className="secondary" type="button" onClick={() => setDraft(emptyDraft)}>
+              <button className="secondary" type="button" onClick={resetDraft}>
                 Annuler
               </button>
             )}
           </div>
         </form>
-        {rsvpError && <p className="error">{rsvpError}</p>}
-        {error && <p className="error">{error}</p>}
-        {status && <p className="success">{status}</p>}
+        {rsvpError && <p className="error" role="alert">{rsvpError}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
+        {status && <p className="success" role="status">{status}</p>}
       </section>
 
-      <section className="panel">
+      <section className="surface-panel guest-list-panel" aria-labelledby="guest-list-title">
         <div className="list-header">
           <div>
-            <h2>Liste des invités RSVP</h2>
+            <p className="eyebrow">Invités</p>
+            <h2 id="guest-list-title">Liste RSVP</h2>
           </div>
-          <div className="filters">
+          <div className="filters" role="group" aria-label="Filtres invités">
             <button className={filter === 'all' ? 'active secondary' : 'secondary'} onClick={() => setFilter('all')} type="button">
               Tous
             </button>
@@ -202,36 +212,50 @@ export function AdminDashboard({
           </div>
         </div>
 
-        <div className="guest-list">
-          {visibleGuests.map((guest) => (
-            <article className="guest-card" key={guest.id}>
-              <div>
-                <strong>{formatPhoneForDisplay(guest.normalizedPhone)}</strong>
-                <span className="muted small">{guest.hasValidated ? 'Validé' : 'Non validé'}</span>
-              </div>
-              <div className="guest-meta">
-                <span>{getGuestTotalPeople(guest)} pers.</span>
-                <span>Civil {guest.attendsCivil ? 'oui' : 'non'}</span>
-                <span>Rel. {guest.attendsReligious ? 'oui' : 'non'}</span>
-                <span>Rec. {guest.attendsReception ? 'oui' : 'non'}</span>
-              </div>
-              <div className="card-actions">
-                <button className="secondary" type="button" onClick={() => editGuest(guest)}>
-                  Modifier
-                </button>
-                <button
-                  className="secondary danger"
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm('Supprimer définitivement cet invité ?')) void onDeleteGuest(guest)
-                  }}
-                >
-                  Supprimer
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
+        {!hasVisibleGuests && (
+          <div className="empty-state">
+            <strong>Aucun invité dans ce filtre.</strong>
+            <span>Les invités actifs apparaîtront ici après ajout ou changement de filtre.</span>
+          </div>
+        )}
+
+        {hasVisibleGuests && (
+          <div className="guest-list">
+            {visibleGuests.map((guest) => (
+              <article className={`guest-card ${guest.hasValidated ? 'is-validated' : ''}`} key={guest.id}>
+                <div className="guest-identity">
+                  <strong>{guest.displayName?.trim() || formatPhoneForDisplay(guest.normalizedPhone)}</strong>
+                  {guest.displayName?.trim() && (
+                    <span className="muted small">{formatPhoneForDisplay(guest.normalizedPhone)}</span>
+                  )}
+                  <span className={`status-pill ${guest.hasValidated ? 'is-success' : 'is-waiting'}`}>
+                    {guest.hasValidated ? 'Validé' : 'Non validé'}
+                  </span>
+                </div>
+                <div className="guest-meta">
+                  <span>{getGuestTotalPeople(guest)} pers.</span>
+                  <span>Civil {guest.attendsCivil ? 'oui' : 'non'}</span>
+                  <span>Rel. {guest.attendsReligious ? 'oui' : 'non'}</span>
+                  <span>Rec. {guest.attendsReception ? 'oui' : 'non'}</span>
+                </div>
+                <div className="card-actions">
+                  <button className="secondary" type="button" onClick={() => editGuest(guest)}>
+                    Modifier
+                  </button>
+                  <button
+                    className="secondary danger"
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Supprimer définitivement cet invité ?')) void onDeleteGuest(guest)
+                    }}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </section>
   )
@@ -257,10 +281,27 @@ function StatCard({ label, value, detail }: { label: string; value: number | str
 
 function EventCard({ title, stats }: { title: string; stats: { adults: number; totalPeople: number } }) {
   return (
-    <section className="panel event-card">
+    <section className="event-card">
       <h2>{title}</h2>
       <p>{stats.adults} adulte(s)</p>
       <strong>{stats.totalPeople} personne(s)</strong>
     </section>
+  )
+}
+
+function AdminCheckbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <label className="checkbox-label">
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span>{label}</span>
+    </label>
   )
 }

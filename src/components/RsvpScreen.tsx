@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Guest, RsvpPayload } from '../types/guest'
 import { MAX_PEOPLE_PER_GUEST, validateRsvp } from '../utils/rsvp'
 
@@ -8,7 +8,15 @@ type RsvpScreenProps = {
   onBack: () => void
 }
 
-export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
+type ConfirmationState = 'idle' | 'celebrating' | 'done'
+
+const eventLabels: Array<{ key: keyof Pick<RsvpPayload, 'attendsCivil' | 'attendsReligious' | 'attendsReception'>; label: string }> = [
+  { key: 'attendsCivil', label: 'Mariage civil' },
+  { key: 'attendsReligious', label: 'Mariage religieux' },
+  { key: 'attendsReception', label: 'Réception' },
+]
+
+export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
   const [form, setForm] = useState<RsvpPayload>({
     adultsCount: guest.adultsCount,
     attendsCivil: guest.attendsCivil,
@@ -16,24 +24,47 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
     attendsReception: guest.attendsReception,
   })
   const [error, setError] = useState('')
-  const [isConfirmed, setIsConfirmed] = useState(false)
+  const [confirmationState, setConfirmationState] = useState<ConfirmationState>('idle')
   const [isSaving, setIsSaving] = useState(false)
 
   const validationError = useMemo(() => validateRsvp(form), [form])
+  const guestLabel = guest.displayName?.trim() || 'Votre invitation'
+  const celebrationName = guest.displayName?.trim()
   const confirmationText =
     form.adultsCount === 1
       ? 'Merci pour votre venue.'
       : 'Merci pour votre venue à tous.'
+  const selectedEvents = eventLabels
+    .filter((event) => form[event.key])
+    .map((event) => event.label)
+    .join(', ') || 'Aucune présence confirmée'
+
+  useEffect(() => {
+    if (confirmationState !== 'celebrating') return undefined
+
+    const timeout = window.setTimeout(() => {
+      setConfirmationState('done')
+    }, 1700)
+
+    return () => window.clearTimeout(timeout)
+  }, [confirmationState])
 
   function updateNumber(value: string) {
     const nextValue = Number.parseInt(value || '0', 10)
     setForm((current) => ({ ...current, adultsCount: Number.isNaN(nextValue) ? 0 : nextValue }))
   }
 
+  function adjustAdults(delta: number) {
+    setForm((current) => ({
+      ...current,
+      adultsCount: Math.min(MAX_PEOPLE_PER_GUEST, Math.max(0, current.adultsCount + delta)),
+    }))
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
-    setIsConfirmed(false)
+    setConfirmationState('idle')
 
     const localError = validateRsvp(form)
     if (localError) {
@@ -44,7 +75,7 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
     setIsSaving(true)
     try {
       await onSubmit(form)
-      setIsConfirmed(true)
+      setConfirmationState('celebrating')
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Enregistrement impossible.')
     } finally {
@@ -52,69 +83,120 @@ export function RsvpScreen({ guest, onSubmit }: RsvpScreenProps) {
     }
   }
 
-  if (isConfirmed) {
+  if (confirmationState === 'celebrating') {
+    return <CelebrationScreen guestName={celebrationName} />
+  }
+
+  if (confirmationState === 'done') {
     return (
-      <section className="confirmation-screen" aria-live="polite">
+      <section className="confirmation-screen" aria-live="polite" aria-labelledby="confirmation-title">
         <div className="confirmation-screen-mark" aria-hidden="true">
           ✓
         </div>
-        <h1>Réponse enregistrée</h1>
+        <p className="eyebrow">RSVP confirmé</p>
+        <h1 id="confirmation-title">Réponse enregistrée</h1>
         <p>Votre confirmation est bien sauvegardée.</p>
         <p>{confirmationText}</p>
+        <div className="confirmation-actions">
+          <button type="button" onClick={() => setConfirmationState('idle')}>
+            Modifier ma réponse
+          </button>
+          <button className="secondary on-dark" type="button" onClick={onBack}>
+            Changer de téléphone
+          </button>
+        </div>
       </section>
     )
   }
 
   return (
-    <section className="panel">
-      <form className="stack" onSubmit={handleSubmit}>
-        <div className="grid compact-rsvp-grid">
-          <label>
-            Nombre d'adultes présents
+    <section className="surface-panel rsvp-panel" aria-labelledby="rsvp-title">
+      <div className="section-heading rsvp-heading">
+        <div>
+          <p className="eyebrow">Votre réponse</p>
+          <h1 id="rsvp-title">Confirmer le RSVP</h1>
+        </div>
+        <button className="secondary compact-action" type="button" onClick={onBack}>
+          Changer de téléphone
+        </button>
+      </div>
+
+      <form className="stack" onSubmit={handleSubmit} aria-busy={isSaving}>
+        <div className="form-block">
+          <label htmlFor="adults-count">Nombre d'adultes présents</label>
+          <div className="number-control">
+            <button
+              aria-label="Retirer un adulte"
+              className="stepper-button"
+              disabled={form.adultsCount <= 0 || isSaving}
+              type="button"
+              onClick={() => adjustAdults(-1)}
+            >
+              −
+            </button>
             <input
+              id="adults-count"
               min="0"
               max={MAX_PEOPLE_PER_GUEST}
+              inputMode="numeric"
               type="number"
               value={form.adultsCount}
               onChange={(event) => updateNumber(event.target.value)}
+              aria-describedby={validationError || error ? 'rsvp-error' : undefined}
             />
-          </label>
+            <button
+              aria-label="Ajouter un adulte"
+              className="stepper-button"
+              disabled={form.adultsCount >= MAX_PEOPLE_PER_GUEST || isSaving}
+              type="button"
+              onClick={() => adjustAdults(1)}
+            >
+              +
+            </button>
+          </div>
         </div>
 
-        <fieldset>
+        <fieldset className="attendance-fieldset">
           <legend>Présences</legend>
-          <Toggle
-            label="Mariage civil"
-            checked={form.attendsCivil}
-            onChange={(checked) => setForm((current) => ({ ...current, attendsCivil: checked }))}
-          />
-          <Toggle
-            label="Mariage religieux"
-            checked={form.attendsReligious}
-            onChange={(checked) => setForm((current) => ({ ...current, attendsReligious: checked }))}
-          />
-          <Toggle
-            label="Réception"
-            checked={form.attendsReception}
-            onChange={(checked) => setForm((current) => ({ ...current, attendsReception: checked }))}
-          />
+          {eventLabels.map((event) => (
+            <Toggle
+              key={event.key}
+              label={event.label}
+              checked={form[event.key]}
+              onChange={(checked) => setForm((current) => ({ ...current, [event.key]: checked }))}
+            />
+          ))}
         </fieldset>
 
         <div className="recap">
           <h2>Récapitulatif</h2>
-          <p>
-            {form.adultsCount} adulte(s).
-          </p>
-          <p>
-            Civil : {form.attendsCivil ? 'oui' : 'non'} · Religieux :{' '}
-            {form.attendsReligious ? 'oui' : 'non'} · Réception :{' '}
-            {form.attendsReception ? 'oui' : 'non'}
-          </p>
+          <dl>
+            <div>
+              <dt>Invité</dt>
+              <dd>{guestLabel}</dd>
+            </div>
+            <div>
+              <dt>Adultes</dt>
+              <dd>{form.adultsCount}</dd>
+            </div>
+            <div>
+              <dt>Présences</dt>
+              <dd>{selectedEvents}</dd>
+            </div>
+          </dl>
         </div>
 
-        {error && <p className="error">{error}</p>}
-        {validationError && !error && <p className="error">{validationError}</p>}
-        <button disabled={Boolean(validationError) || isSaving} type="submit">
+        {error && (
+          <p className="error" id="rsvp-error" role="alert">
+            {error}
+          </p>
+        )}
+        {validationError && !error && (
+          <p className="error" id="rsvp-error" role="alert">
+            {validationError}
+          </p>
+        )}
+        <button className="primary-action" disabled={Boolean(validationError) || isSaving} type="submit">
           {isSaving ? 'Enregistrement...' : 'Valider ma réponse'}
         </button>
       </form>
@@ -132,9 +214,37 @@ function Toggle({
   onChange: (checked: boolean) => void
 }) {
   return (
-    <label className="toggle-row">
-      <span>{label}</span>
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+    <label className={`toggle-row ${checked ? 'is-checked' : ''}`}>
+      <input
+        className="toggle-input"
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="toggle-copy">
+        <span>{label}</span>
+        <small>{checked ? 'Présence confirmée' : 'Non confirmé'}</small>
+      </span>
+      <span className="toggle-switch" aria-hidden="true">
+        <span />
+      </span>
     </label>
+  )
+}
+
+function CelebrationScreen({ guestName }: { guestName?: string }) {
+  return (
+    <section className="rsvp-celebration" aria-live="polite" aria-labelledby="celebration-title">
+      <div className="celebration-stage" aria-hidden="true">
+        <span className="celebration-ring" />
+        <span className="celebration-ring celebration-ring-delayed" />
+        {Array.from({ length: 12 }, (_, index) => (
+          <span className={`celebration-spark spark-${index + 1}`} key={index} />
+        ))}
+      </div>
+      <p className="eyebrow">Réponse sauvegardée</p>
+      <h1 id="celebration-title">{guestName ? `Merci ${guestName}` : 'Merci'}</h1>
+      <p>Votre RSVP est confirmé.</p>
+    </section>
   )
 }

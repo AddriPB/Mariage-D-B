@@ -24,7 +24,6 @@ function App() {
     const visitedGuest = await guestStorage.markVisited(guest.id)
     setSession({ kind: 'guest', phone: visitedGuest.normalizedPhone, guestId: visitedGuest.id })
     setCurrentGuest({ ...visitedGuest })
-    await refreshGuests()
   }
 
   async function handleAdminAccess(admin: AdminProfile) {
@@ -52,7 +51,6 @@ function App() {
     if (!currentGuest) throw new Error('Session invité introuvable.')
     const updatedGuest = await guestStorage.submitRsvp(currentGuest.id, payload)
     setCurrentGuest({ ...updatedGuest })
-    await refreshGuests()
     return updatedGuest
   }
 
@@ -66,8 +64,10 @@ function App() {
     await refreshGuests()
   }
 
+  const shellClassName = session ? `app-shell app-shell-${session.kind}` : 'app-shell app-shell-access'
+
   return (
-    <main className="app-shell">
+    <main className={shellClassName}>
       {!session && (
         <AccessScreen
           findByPhone={guestStorage.findByPhone}
@@ -92,13 +92,12 @@ function App() {
       )}
 
       {session?.kind === 'admin' && (
-          <AdminDashboard
-            guests={guests}
-            onSaveGuest={handleSaveGuest}
-            onDeleteGuest={handleDeleteGuest}
-          />
+        <AdminDashboard
+          guests={guests}
+          onSaveGuest={handleSaveGuest}
+          onDeleteGuest={handleDeleteGuest}
+        />
       )}
-
     </main>
   )
 }
