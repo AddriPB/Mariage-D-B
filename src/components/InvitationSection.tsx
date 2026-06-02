@@ -6,6 +6,8 @@ type CalendarEvent = {
   title: string
   start: string
   end: string
+  googleStart: string
+  googleEnd: string
   location: string
   address: string
 }
@@ -24,6 +26,8 @@ function getCalendarEvents(content: WeddingContent): CalendarEvent[] {
       title: 'Mariage civil',
       start: '20260926T100000',
       end: '20260926T110000',
+      googleStart: '20260926T100000',
+      googleEnd: '20260926T110000',
       location: content.civilLocation,
       address: content.civilAddress,
     },
@@ -32,6 +36,8 @@ function getCalendarEvents(content: WeddingContent): CalendarEvent[] {
       title: 'Bénédiction',
       start: '20260926T150000',
       end: '20260926T163000',
+      googleStart: '20260926T150000',
+      googleEnd: '20260926T163000',
       location: content.religiousLocation,
       address: content.religiousAddress,
     },
@@ -40,6 +46,8 @@ function getCalendarEvents(content: WeddingContent): CalendarEvent[] {
       title: 'Réception',
       start: '20260926T180000',
       end: '20260927T020000',
+      googleStart: '20260926T180000',
+      googleEnd: '20260927T020000',
       location: content.receptionLocation,
       address: content.receptionAddress,
     },
@@ -139,6 +147,47 @@ function downloadIcs(events: CalendarEvent[], filename: string): void {
   }
 }
 
+function openIcs(events: CalendarEvent[]): void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new Error('Ouverture calendrier indisponible.')
+  }
+
+  const blob = new Blob([buildIcs(events)], { type: 'text/calendar;charset=utf-8' })
+  const url = window.URL.createObjectURL(blob)
+
+  window.setTimeout(() => window.URL.revokeObjectURL(url), 3000)
+  window.location.assign(url)
+}
+
+function getPublicIcsUrl(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URL(`${import.meta.env.BASE_URL}mariage-daima-agenda.ics`, window.location.origin).toString()
+}
+
+function openPublicIcs(events: CalendarEvent[]): void {
+  const publicUrl = getPublicIcsUrl()
+
+  if (publicUrl) {
+    window.location.assign(publicUrl)
+    return
+  }
+
+  openIcs(events)
+}
+
+function getGoogleCalendarUrl(event: CalendarEvent): string {
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: `${event.googleStart}/${event.googleEnd}`,
+    ctz: 'Europe/Paris',
+    details: `${event.title} - ${event.address}`,
+    location: `${event.location}, ${event.address}`,
+  })
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
 function CalendarIcon() {
   return (
     <svg className="calendar-button-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
@@ -170,6 +219,8 @@ function EventDetails({ title, time, location, address }: EventDetailsProps) {
 
 export function InvitationSection() {
   const [weddingContent, setWeddingContent] = useState(getDefaultWeddingContent)
+  const [showCalendarChoices, setShowCalendarChoices] = useState(false)
+  const [showGoogleChoices, setShowGoogleChoices] = useState(false)
   const [showCalendarFallback, setShowCalendarFallback] = useState(false)
 
   useEffect(() => {
@@ -182,9 +233,14 @@ export function InvitationSection() {
     }
   }, [])
 
-  function handleGroupedCalendarDownload() {
+  function handleCalendarChoice() {
+    setShowCalendarChoices((isVisible) => !isVisible)
+    setShowGoogleChoices(false)
+  }
+
+  function handleIcsCalendarOpen() {
     try {
-      downloadIcs(getCalendarEvents(weddingContent), 'mariage-daima-agenda.ics')
+      openPublicIcs(getCalendarEvents(weddingContent))
     } catch {
       setShowCalendarFallback(true)
     }
@@ -234,10 +290,54 @@ export function InvitationSection() {
         />
       </div>
       <div className="calendar-actions" aria-label="Ajouter les événements à l'agenda">
-        <button className="primary-action calendar-action-button" type="button" onClick={handleGroupedCalendarDownload}>
+        <button className="primary-action calendar-action-button" type="button" onClick={handleCalendarChoice}>
           <CalendarIcon />
           <span>Ajouter les 3 événements à mon agenda</span>
         </button>
+        {showCalendarChoices && (
+          <div className="calendar-choice-panel" aria-label="Choisir un calendrier">
+            <button
+              className="secondary calendar-action-button"
+              type="button"
+              onClick={() => setShowGoogleChoices((isVisible) => !isVisible)}
+            >
+              <CalendarIcon />
+              <span>Google Agenda</span>
+            </button>
+            <button className="secondary calendar-action-button" type="button" onClick={handleIcsCalendarOpen}>
+              <CalendarIcon />
+              <span>Apple Calendar</span>
+            </button>
+            <button className="secondary calendar-action-button" type="button" onClick={handleIcsCalendarOpen}>
+              <CalendarIcon />
+              <span>Samsung Calendar</span>
+            </button>
+            <button className="secondary calendar-action-button" type="button" onClick={handleIcsCalendarOpen}>
+              <CalendarIcon />
+              <span>Outlook</span>
+            </button>
+          </div>
+        )}
+        {showGoogleChoices && (
+          <div className="calendar-google-panel" aria-label="Ajouter les événements dans Google Agenda">
+            {getCalendarEvents(weddingContent).map((event) => (
+              <a
+                className="secondary calendar-action-button calendar-link-button"
+                href={getGoogleCalendarUrl(event)}
+                target="_blank"
+                rel="noreferrer"
+                key={event.id}
+              >
+                <CalendarIcon />
+                <span>
+                  {event.id === 'civil' && 'Google - mariage civil'}
+                  {event.id === 'religious' && 'Google - bénédiction'}
+                  {event.id === 'reception' && 'Google - réception'}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
         {showCalendarFallback && (
           <div className="calendar-fallback">
             <p className="error" role="alert">

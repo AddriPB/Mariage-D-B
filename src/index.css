@@ -63,6 +63,10 @@ textarea {
   font: inherit;
 }
 
+a {
+  color: inherit;
+}
+
 button {
   display: inline-flex;
   width: fit-content;
@@ -666,12 +670,43 @@ small {
   gap: 0.75rem;
 }
 
+.calendar-choice-panel,
+.calendar-google-panel {
+  display: grid;
+  gap: 0.6rem;
+}
+
 .calendar-action-button {
   display: inline-grid;
   grid-template-columns: 24px minmax(0, 1fr);
   gap: 0.7rem;
   align-items: center;
   justify-items: start;
+}
+
+a.calendar-action-button {
+  min-height: 48px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.78rem 1rem;
+  color: var(--primary-strong);
+  background: var(--surface);
+  font-weight: 800;
+  line-height: 1.15;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+a.calendar-action-button:hover {
+  color: var(--primary-deep);
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 10px 24px rgba(31, 122, 77, 0.18);
 }
 
 .calendar-action-button span {

@@ -10,7 +10,6 @@ type RsvpScreenProps = {
   guest: Guest
   onOverlayChange?: (isVisible: boolean) => void
   onSubmit: (payload: RsvpPayload) => Promise<Guest>
-  onBack: () => void
 }
 
 type ConfirmationState = 'idle' | 'celebrating' | 'done'
@@ -23,7 +22,7 @@ const eventLabels: Array<{ key: keyof Pick<RsvpPayload, 'attendsCivil' | 'attend
 
 const celebrationPhotos = [couple1, couple2, couple3, couple4]
 
-export function RsvpScreen({ guest, onOverlayChange, onSubmit, onBack }: RsvpScreenProps) {
+export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps) {
   const [form, setForm] = useState<RsvpPayload>({
     adultsCount: guest.adultsCount,
     attendsCivil: guest.attendsCivil,
@@ -37,7 +36,6 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit, onBack }: RsvpScr
   const [isSaving, setIsSaving] = useState(false)
 
   const validationError = useMemo(() => validateRsvp(form), [form])
-  const guestLabel = guest.displayName?.trim() || 'Votre invitation'
   const celebrationName = guest.displayName?.trim()
   const selectedEvents = eventLabels
     .filter((event) => form[event.key])
@@ -122,17 +120,7 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit, onBack }: RsvpScr
   }
 
   return (
-    <section className="surface-panel rsvp-panel" aria-labelledby="rsvp-title">
-      <div className="section-heading rsvp-heading">
-        <div>
-          <p className="eyebrow">Votre réponse</p>
-          <h1 id="rsvp-title">Confirmer le RSVP</h1>
-        </div>
-        <button className="secondary compact-action" type="button" onClick={onBack}>
-          Changer de téléphone
-        </button>
-      </div>
-
+    <section className="surface-panel rsvp-panel" aria-label="Formulaire RSVP">
       <form className="stack" onSubmit={handleSubmit} aria-busy={isSaving}>
         <div className="form-block">
           <label htmlFor="adults-count">Nombre d'adultes présents</label>
@@ -183,10 +171,6 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit, onBack }: RsvpScr
         <div className="recap">
           <h2>Récapitulatif</h2>
           <dl>
-            <div>
-              <dt>Invité</dt>
-              <dd>{guestLabel}</dd>
-            </div>
             <div>
               <dt>Adultes</dt>
               <dd>{form.adultsCount}</dd>

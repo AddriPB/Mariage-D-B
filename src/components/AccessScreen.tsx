@@ -168,11 +168,6 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
             <button className="primary-action" disabled={isLoading} type="submit">
               {submitLabel}
             </button>
-            {isAdminPasswordStep && (
-              <button className="secondary" type="button" onClick={resetAdminStep}>
-                Changer de téléphone
-              </button>
-            )}
           </div>
         </form>
 

@@ -87,11 +87,6 @@ function App() {
             guest={currentGuest}
             onOverlayChange={setIsGuestRsvpOverlayVisible}
             onSubmit={handleRsvpSubmit}
-            onBack={() => {
-              setSession(null)
-              setCurrentGuest(null)
-              setIsGuestRsvpOverlayVisible(false)
-            }}
           />
         </>
       )}
