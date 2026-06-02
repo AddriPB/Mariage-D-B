@@ -30,22 +30,4 @@ SUMMARY:Mariage civil
 LOCATION:Mairie de Champigny-sur-Marne\, 14 rue Louis-Talamoni\, 94500 Champigny-sur-Marne
 DESCRIPTION:Mariage civil - 14 rue Louis-Talamoni\, 94500 Champigny-sur-Marne
 END:VEVENT
-BEGIN:VEVENT
-UID:mariage-daima-religious-20260926@daima
-DTSTAMP:20260602T000000Z
-DTSTART;TZID=Europe/Paris:20260926T150000
-DTEND;TZID=Europe/Paris:20260926T163000
-SUMMARY:Benediction
-LOCATION:Mariage religieux\, 381 Rue Marcel Paul\, 94500 Champigny-sur-Marne
-DESCRIPTION:Benediction - 381 Rue Marcel Paul\, 94500 Champigny-sur-Marne
-END:VEVENT
-BEGIN:VEVENT
-UID:mariage-daima-reception-20260926@daima
-DTSTAMP:20260602T000000Z
-DTSTART;TZID=Europe/Paris:20260926T180000
-DTEND;TZID=Europe/Paris:20260927T020000
-SUMMARY:Reception
-LOCATION:Reception\, 381 Rue Marcel Paul\, 94500 Champigny-sur-Marne
-DESCRIPTION:Reception - 381 Rue Marcel Paul\, 94500 Champigny-sur-Marne
-END:VEVENT
 END:VCALENDAR

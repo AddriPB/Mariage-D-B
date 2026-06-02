@@ -630,7 +630,7 @@ small {
 
 .event-details {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr 48px;
   gap: 0.8rem;
   align-items: start;
   padding: 0.85rem;
@@ -665,53 +665,59 @@ small {
   overflow-wrap: anywhere;
 }
 
-.calendar-actions {
+.event-calendar-toggle {
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  color: var(--primary-deep);
+  background: var(--primary-soft);
+  border-color: rgba(31, 122, 77, 0.28);
+}
+
+.event-calendar-toggle:hover,
+.event-calendar-toggle[aria-expanded="true"] {
+  color: white;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.event-calendar-toggle .calendar-button-icon {
+  width: 23px;
+  height: 23px;
+}
+
+.event-calendar-panel {
+  grid-column: 1 / -1;
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  padding-top: 0.1rem;
 }
 
-.calendar-choice-panel,
-.calendar-google-panel {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.calendar-action-button {
-  display: inline-grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 0.7rem;
-  align-items: center;
-  justify-items: start;
-}
-
-a.calendar-action-button {
-  min-height: 48px;
+.calendar-provider-button {
+  min-height: 44px;
+  width: 100%;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  padding: 0.78rem 1rem;
+  padding: 0.66rem 0.75rem;
   color: var(--primary-strong);
   background: var(--surface);
-  font-weight: 800;
+  font-weight: 850;
   line-height: 1.15;
+  text-align: center;
   text-decoration: none;
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    transform 160ms ease,
-    box-shadow 160ms ease;
 }
 
-a.calendar-action-button:hover {
+.calendar-provider-button:hover {
   color: var(--primary-deep);
   border-color: var(--primary);
   background: var(--primary-soft);
-  box-shadow: 0 10px 24px rgba(31, 122, 77, 0.18);
 }
 
-.calendar-action-button span {
-  min-width: 0;
-  text-align: left;
+.event-calendar-error {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
 }
 
 .calendar-button-icon {
@@ -723,20 +729,6 @@ a.calendar-action-button:hover {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2.2;
-}
-
-.calendar-fallback {
-  display: grid;
-  gap: 0.7rem;
-}
-
-.calendar-fallback .error {
-  margin-bottom: 0;
-}
-
-.calendar-fallback-actions {
-  display: grid;
-  gap: 0.6rem;
 }
 
 .rsvp-panel {
@@ -919,25 +911,44 @@ a.calendar-action-button:hover {
   animation: celebration-fade 8200ms ease both;
 }
 
-.rsvp-celebration h1,
-.rsvp-celebration p,
-.rsvp-celebration .eyebrow {
-  position: relative;
-  z-index: 2;
-  max-width: 34rem;
-  margin-bottom: 0;
-  color: white;
-}
-
-.rsvp-celebration h1 {
-  font-size: 2.25rem;
-  text-shadow: 0 16px 46px rgba(0, 0, 0, 0.34);
-}
-
 .celebration-stage {
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+
+.handwritten-thanks {
+  position: absolute;
+  top: max(2rem, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 3;
+  width: min(100% - 2rem, 680px);
+  margin: 0;
+  color: white;
+  font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  font-size: clamp(1.45rem, 4.6vw, 3rem);
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow:
+    0 2px 0 rgba(6, 31, 26, 0.28),
+    0 16px 42px rgba(0, 0, 0, 0.48);
+  transform: translateX(-50%);
+}
+
+.handwritten-word {
+  display: inline-block;
+  margin-right: 0.24em;
+  white-space: nowrap;
+}
+
+.handwritten-character {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.34em) rotate(-1.5deg);
+  animation: handwriting-character 520ms cubic-bezier(0.2, 0.86, 0.26, 1) both;
+  animation-delay: calc(220ms + (var(--character-index) * 58ms));
 }
 
 .celebration-photo-reel {
@@ -1092,8 +1103,8 @@ a.calendar-action-button:hover {
 }
 
 .final-photo-screen {
-  place-items: end center;
-  align-content: end;
+  place-items: start center;
+  align-content: start;
   gap: 0;
   background: #061f1a;
 }
@@ -1117,26 +1128,6 @@ a.calendar-action-button:hover {
   object-fit: cover;
   object-position: center 74%;
   animation: final-photo-enter 520ms ease-out both;
-}
-
-.final-photo-screen .confirmation-actions {
-  position: relative;
-  z-index: 2;
-  justify-content: center;
-  margin-top: 0;
-}
-
-.final-photo-screen button {
-  min-width: min(100%, 260px);
-  border-color: rgba(255, 255, 255, 0.42);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--primary-deep);
-  font-weight: 950;
-  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.28);
-}
-
-.final-photo-screen button:hover {
-  background: white;
 }
 
 .confirmation-screen h1,
@@ -1640,6 +1631,23 @@ a.calendar-action-button:hover {
   }
 }
 
+@keyframes handwriting-character {
+  0% {
+    opacity: 0;
+    transform: translateY(0.34em) rotate(-1.5deg);
+  }
+
+  64% {
+    opacity: 1;
+    transform: translateY(-0.04em) rotate(0.6deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
 @keyframes final-photo-enter {
   from {
     opacity: 0;
@@ -1676,11 +1684,16 @@ a.calendar-action-button:hover {
   }
 
   .event-details {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr) 48px;
+    gap: 0.65rem;
   }
 
   .event-time {
     width: fit-content;
+  }
+
+  .event-calendar-panel {
+    grid-template-columns: 1fr;
   }
 
   .checkbox-grid,
@@ -1807,8 +1820,10 @@ a.calendar-action-button:hover {
   }
 
   .celebration-photo-4,
-  .final-photo {
+  .final-photo,
+  .handwritten-character {
     opacity: 1;
     transform: none;
+    animation: none;
   }
 }

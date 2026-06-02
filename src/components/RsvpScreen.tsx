@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import couple1 from '../assets/guest/couple-1.jpg'
 import couple2 from '../assets/guest/couple-2.jpg'
 import couple3 from '../assets/guest/couple-3.jpg'
@@ -21,6 +21,7 @@ const eventLabels: Array<{ key: keyof Pick<RsvpPayload, 'attendsCivil' | 'attend
 ]
 
 const celebrationPhotos = [couple1, couple2, couple3, couple4]
+const thankYouMessage = 'En vous remerciant de votre présence'
 
 export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps) {
   const [form, setForm] = useState<RsvpPayload>({
@@ -36,7 +37,6 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
   const [isSaving, setIsSaving] = useState(false)
 
   const validationError = useMemo(() => validateRsvp(form), [form])
-  const celebrationName = guest.displayName?.trim()
   const selectedEvents = eventLabels
     .filter((event) => form[event.key])
     .map((event) => event.label)
@@ -103,18 +103,14 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
   }
 
   if (confirmationState === 'celebrating') {
-    return <CelebrationScreen guestName={celebrationName} />
+    return <CelebrationScreen />
   }
 
   if (confirmationState === 'done') {
     return (
-      <section className="confirmation-screen final-photo-screen" aria-live="polite">
+      <section className="confirmation-screen final-photo-screen" aria-live="polite" aria-label={thankYouMessage}>
         <img className="final-photo" src={couple4} alt="" aria-hidden="true" />
-        <div className="confirmation-actions">
-          <button type="button" onClick={() => setConfirmationState('idle')}>
-            Modifier ma réponse
-          </button>
-        </div>
+        <HandwrittenThanks />
       </section>
     )
   }
@@ -228,9 +224,36 @@ function Toggle({
   )
 }
 
-function CelebrationScreen({ guestName }: { guestName?: string }) {
+function HandwrittenThanks() {
+  let characterIndex = 0
+
   return (
-    <section className="rsvp-celebration" aria-live="polite" aria-labelledby="celebration-title">
+    <p className="handwritten-thanks" aria-label={thankYouMessage}>
+      {thankYouMessage.split(' ').map((word, wordIndex) => (
+        <span className="handwritten-word" aria-hidden="true" key={`${word}-${wordIndex}`}>
+          {Array.from(word).map((character) => {
+            const index = characterIndex
+            characterIndex += 1
+
+            return (
+              <span
+                className="handwritten-character"
+                key={`${character}-${wordIndex}-${index}`}
+                style={{ '--character-index': index } as CSSProperties}
+              >
+                {character}
+              </span>
+            )
+          })}
+        </span>
+      ))}
+    </p>
+  )
+}
+
+function CelebrationScreen() {
+  return (
+    <section className="rsvp-celebration" aria-live="polite" aria-label={thankYouMessage}>
       <div className="celebration-photo-reel" aria-hidden="true">
         {celebrationPhotos.map((photo, index) => (
           <img
@@ -253,9 +276,7 @@ function CelebrationScreen({ guestName }: { guestName?: string }) {
           <span className={`celebration-floating-heart floating-heart-${index + 1}`} key={`heart-${index}`} />
         ))}
       </div>
-      <p className="eyebrow">Réponse sauvegardée</p>
-      <h1 id="celebration-title">{guestName ? `Merci ${guestName}` : 'Merci'}</h1>
-      <p>Votre RSVP est confirmé.</p>
+      <HandwrittenThanks />
     </section>
   )
 }

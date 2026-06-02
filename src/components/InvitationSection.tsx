@@ -13,10 +13,12 @@ type CalendarEvent = {
 }
 
 type EventDetailsProps = {
-  title: string
   time: string
-  location: string
-  address: string
+  event: CalendarEvent
+  isCalendarOpen: boolean
+  calendarError: string
+  onToggleCalendar: (eventId: CalendarEvent['id']) => void
+  onOpenIcsCalendar: (eventId: CalendarEvent['id']) => void
 }
 
 function getCalendarEvents(content: WeddingContent): CalendarEvent[] {
@@ -54,125 +56,9 @@ function getCalendarEvents(content: WeddingContent): CalendarEvent[] {
   ]
 }
 
-const timezoneBlock = [
-  'BEGIN:VTIMEZONE',
-  'TZID:Europe/Paris',
-  'X-LIC-LOCATION:Europe/Paris',
-  'BEGIN:DAYLIGHT',
-  'TZOFFSETFROM:+0100',
-  'TZOFFSETTO:+0200',
-  'TZNAME:CEST',
-  'DTSTART:19700329T020000',
-  'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
-  'END:DAYLIGHT',
-  'BEGIN:STANDARD',
-  'TZOFFSETFROM:+0200',
-  'TZOFFSETTO:+0100',
-  'TZNAME:CET',
-  'DTSTART:19701025T030000',
-  'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
-  'END:STANDARD',
-  'END:VTIMEZONE',
-]
-
-function escapeIcsValue(value: string): string {
-  return value
-    .replace(/\\/g, '\\\\')
-    .replace(/\n/g, '\\n')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;')
-}
-
-function foldIcsLine(line: string): string {
-  const chunks: string[] = []
-  let remaining = line
-
-  while (remaining.length > 75) {
-    chunks.push(remaining.slice(0, 75))
-    remaining = remaining.slice(75)
-  }
-
-  chunks.push(remaining)
-  return chunks.join('\r\n ')
-}
-
-function formatIcsDate(date: Date): string {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
-}
-
-function buildIcs(events: CalendarEvent[]): string {
-  const timestamp = formatIcsDate(new Date())
-  const eventLines = events.flatMap((event) => [
-    'BEGIN:VEVENT',
-    `UID:mariage-daima-${event.id}-20260926@daima`,
-    `DTSTAMP:${timestamp}`,
-    `DTSTART;TZID=Europe/Paris:${event.start}`,
-    `DTEND;TZID=Europe/Paris:${event.end}`,
-    `SUMMARY:${escapeIcsValue(event.title)}`,
-    `LOCATION:${escapeIcsValue(`${event.location}, ${event.address}`)}`,
-    `DESCRIPTION:${escapeIcsValue(`${event.title} - ${event.address}`)}`,
-    'END:VEVENT',
-  ])
-
-  return [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Mariage Daima//Invitation//FR',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    ...timezoneBlock,
-    ...eventLines,
-    'END:VCALENDAR',
-  ].map(foldIcsLine).join('\r\n')
-}
-
-function downloadIcs(events: CalendarEvent[], filename: string): void {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    throw new Error('Téléchargement indisponible.')
-  }
-
-  const blob = new Blob([buildIcs(events)], { type: 'text/calendar;charset=utf-8' })
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-
-  try {
-    link.href = url
-    link.download = filename
-    link.rel = 'noopener'
-    document.body.appendChild(link)
-    link.click()
-  } finally {
-    link.remove()
-    window.setTimeout(() => window.URL.revokeObjectURL(url), 1000)
-  }
-}
-
-function openIcs(events: CalendarEvent[]): void {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    throw new Error('Ouverture calendrier indisponible.')
-  }
-
-  const blob = new Blob([buildIcs(events)], { type: 'text/calendar;charset=utf-8' })
-  const url = window.URL.createObjectURL(blob)
-
-  window.setTimeout(() => window.URL.revokeObjectURL(url), 3000)
-  window.location.assign(url)
-}
-
-function getPublicIcsUrl(): string | null {
+function getPublicIcsUrl(eventId: CalendarEvent['id']): string | null {
   if (typeof window === 'undefined') return null
-  return new URL(`${import.meta.env.BASE_URL}mariage-daima-agenda.ics`, window.location.origin).toString()
-}
-
-function openPublicIcs(events: CalendarEvent[]): void {
-  const publicUrl = getPublicIcsUrl()
-
-  if (publicUrl) {
-    window.location.assign(publicUrl)
-    return
-  }
-
-  openIcs(events)
+  return new URL(`${import.meta.env.BASE_URL}mariage-daima-${eventId}.ics`, window.location.origin).toString()
 }
 
 function getGoogleCalendarUrl(event: CalendarEvent): string {
@@ -198,30 +84,66 @@ function CalendarIcon() {
   )
 }
 
-function EventDetails({ title, time, location, address }: EventDetailsProps) {
+function EventDetails({
+  time,
+  event,
+  isCalendarOpen,
+  calendarError,
+  onToggleCalendar,
+  onOpenIcsCalendar,
+}: EventDetailsProps) {
   const shouldShowLocation =
-    location.trim().toLowerCase() !== title.trim().toLowerCase()
-    && location.trim().toLowerCase() !== 'mairie de champigny-sur-marne'
+    event.location.trim().toLowerCase() !== event.title.trim().toLowerCase()
+    && event.location.trim().toLowerCase() !== 'mairie de champigny-sur-marne'
 
   return (
     <article className="event-details">
-      <div className="event-time" aria-label={`Horaire ${title}`}>
+      <div className="event-time" aria-label={`Horaire ${event.title}`}>
         {time}
       </div>
       <div className="event-copy">
-        <h3>{title}</h3>
-        {shouldShowLocation && <p>{location}</p>}
-        <address>{address}</address>
+        <h3>{event.title}</h3>
+        {shouldShowLocation && <p>{event.location}</p>}
+        <address>{event.address}</address>
       </div>
+      <button
+        className="event-calendar-toggle"
+        type="button"
+        aria-label={`Ajouter ${event.title} à un agenda`}
+        aria-expanded={isCalendarOpen}
+        onClick={() => onToggleCalendar(event.id)}
+      >
+        <CalendarIcon />
+      </button>
+      {isCalendarOpen && (
+        <div className="event-calendar-panel" aria-label={`Choisir un calendrier pour ${event.title}`}>
+          <a className="calendar-provider-button" href={getGoogleCalendarUrl(event)} target="_blank" rel="noreferrer">
+            Google Agenda
+          </a>
+          <button className="calendar-provider-button" type="button" onClick={() => onOpenIcsCalendar(event.id)}>
+            Apple Calendar
+          </button>
+          <button className="calendar-provider-button" type="button" onClick={() => onOpenIcsCalendar(event.id)}>
+            Samsung Calendar
+          </button>
+          <button className="calendar-provider-button" type="button" onClick={() => onOpenIcsCalendar(event.id)}>
+            Outlook
+          </button>
+          {calendarError && (
+            <p className="error event-calendar-error" role="alert">
+              {calendarError}
+            </p>
+          )}
+        </div>
+      )}
     </article>
   )
 }
 
 export function InvitationSection() {
   const [weddingContent, setWeddingContent] = useState(getDefaultWeddingContent)
-  const [showCalendarChoices, setShowCalendarChoices] = useState(false)
-  const [showGoogleChoices, setShowGoogleChoices] = useState(false)
-  const [showCalendarFallback, setShowCalendarFallback] = useState(false)
+  const [openCalendarEventId, setOpenCalendarEventId] = useState<CalendarEvent['id'] | null>(null)
+  const [calendarError, setCalendarError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -233,26 +155,23 @@ export function InvitationSection() {
     }
   }, [])
 
-  function handleCalendarChoice() {
-    setShowCalendarChoices((isVisible) => !isVisible)
-    setShowGoogleChoices(false)
+  function handleToggleCalendar(eventId: CalendarEvent['id']) {
+    setCalendarError('')
+    setOpenCalendarEventId((currentEventId) => currentEventId === eventId ? null : eventId)
   }
 
-  function handleIcsCalendarOpen() {
-    try {
-      openPublicIcs(getCalendarEvents(weddingContent))
-    } catch {
-      setShowCalendarFallback(true)
+  function handleIcsCalendarOpen(eventId: CalendarEvent['id']) {
+    const publicUrl = getPublicIcsUrl(eventId)
+
+    if (!publicUrl) {
+      setCalendarError('L’ouverture du calendrier n’a pas fonctionné.')
+      return
     }
+
+    window.location.assign(publicUrl)
   }
 
-  function handleSingleCalendarDownload(event: CalendarEvent) {
-    try {
-      downloadIcs([event], `mariage-daima-${event.id}.ics`)
-    } catch {
-      setShowCalendarFallback(true)
-    }
-  }
+  const calendarEvents = getCalendarEvents(weddingContent)
 
   return (
     <section className="invitation-panel" aria-labelledby="invitation-title">
@@ -271,97 +190,29 @@ export function InvitationSection() {
       </div>
       <div className="event-list">
         <EventDetails
-          title="Mariage civil"
+          event={calendarEvents[0]}
           time={weddingContent.civilTime}
-          location={weddingContent.civilLocation}
-          address={weddingContent.civilAddress}
+          isCalendarOpen={openCalendarEventId === 'civil'}
+          calendarError={openCalendarEventId === 'civil' ? calendarError : ''}
+          onToggleCalendar={handleToggleCalendar}
+          onOpenIcsCalendar={handleIcsCalendarOpen}
         />
         <EventDetails
-          title="Mariage religieux"
+          event={calendarEvents[1]}
           time={weddingContent.religiousTime}
-          location={weddingContent.religiousLocation}
-          address={weddingContent.religiousAddress}
+          isCalendarOpen={openCalendarEventId === 'religious'}
+          calendarError={openCalendarEventId === 'religious' ? calendarError : ''}
+          onToggleCalendar={handleToggleCalendar}
+          onOpenIcsCalendar={handleIcsCalendarOpen}
         />
         <EventDetails
-          title="Réception"
+          event={calendarEvents[2]}
           time={weddingContent.receptionTime}
-          location={weddingContent.receptionLocation}
-          address={weddingContent.receptionAddress}
+          isCalendarOpen={openCalendarEventId === 'reception'}
+          calendarError={openCalendarEventId === 'reception' ? calendarError : ''}
+          onToggleCalendar={handleToggleCalendar}
+          onOpenIcsCalendar={handleIcsCalendarOpen}
         />
-      </div>
-      <div className="calendar-actions" aria-label="Ajouter les événements à l'agenda">
-        <button className="primary-action calendar-action-button" type="button" onClick={handleCalendarChoice}>
-          <CalendarIcon />
-          <span>Ajouter les 3 événements à mon agenda</span>
-        </button>
-        {showCalendarChoices && (
-          <div className="calendar-choice-panel" aria-label="Choisir un calendrier">
-            <button
-              className="secondary calendar-action-button"
-              type="button"
-              onClick={() => setShowGoogleChoices((isVisible) => !isVisible)}
-            >
-              <CalendarIcon />
-              <span>Google Agenda</span>
-            </button>
-            <button className="secondary calendar-action-button" type="button" onClick={handleIcsCalendarOpen}>
-              <CalendarIcon />
-              <span>Apple Calendar</span>
-            </button>
-            <button className="secondary calendar-action-button" type="button" onClick={handleIcsCalendarOpen}>
-              <CalendarIcon />
-              <span>Samsung Calendar</span>
-            </button>
-            <button className="secondary calendar-action-button" type="button" onClick={handleIcsCalendarOpen}>
-              <CalendarIcon />
-              <span>Outlook</span>
-            </button>
-          </div>
-        )}
-        {showGoogleChoices && (
-          <div className="calendar-google-panel" aria-label="Ajouter les événements dans Google Agenda">
-            {getCalendarEvents(weddingContent).map((event) => (
-              <a
-                className="secondary calendar-action-button calendar-link-button"
-                href={getGoogleCalendarUrl(event)}
-                target="_blank"
-                rel="noreferrer"
-                key={event.id}
-              >
-                <CalendarIcon />
-                <span>
-                  {event.id === 'civil' && 'Google - mariage civil'}
-                  {event.id === 'religious' && 'Google - bénédiction'}
-                  {event.id === 'reception' && 'Google - réception'}
-                </span>
-              </a>
-            ))}
-          </div>
-        )}
-        {showCalendarFallback && (
-          <div className="calendar-fallback">
-            <p className="error" role="alert">
-              L’ajout groupé n’a pas fonctionné. Vous pouvez ajouter les événements un par un.
-            </p>
-            <div className="calendar-fallback-actions">
-              {getCalendarEvents(weddingContent).map((event) => (
-                <button
-                  className="secondary calendar-action-button"
-                  type="button"
-                  onClick={() => handleSingleCalendarDownload(event)}
-                  key={event.id}
-                >
-                  <CalendarIcon />
-                  <span>
-                    {event.id === 'civil' && 'Ajouter le mariage civil'}
-                    {event.id === 'religious' && 'Ajouter la bénédiction'}
-                    {event.id === 'reception' && 'Ajouter la réception'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   )
