@@ -661,6 +661,49 @@ small {
   overflow-wrap: anywhere;
 }
 
+.calendar-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.calendar-action-button {
+  display: inline-grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  justify-items: start;
+}
+
+.calendar-action-button span {
+  min-width: 0;
+  text-align: left;
+}
+
+.calendar-button-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.calendar-fallback {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.calendar-fallback .error {
+  margin-bottom: 0;
+}
+
+.calendar-fallback-actions {
+  display: grid;
+  gap: 0.6rem;
+}
+
 .rsvp-panel {
   display: grid;
   gap: 1rem;
