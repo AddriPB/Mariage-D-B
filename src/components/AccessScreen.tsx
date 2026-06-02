@@ -101,7 +101,19 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
 
   return (
     <section className="access-screen" aria-labelledby="access-title">
+      <div className="guest-ambient guest-ambient-access" aria-hidden="true">
+        <span className="ambient-glow ambient-glow-1" />
+        <span className="ambient-glow ambient-glow-2" />
+        <span className="ambient-heart heart-1" />
+        <span className="ambient-heart heart-2" />
+        <span className="ambient-heart heart-3" />
+        <span className="ambient-petal petal-1" />
+        <span className="ambient-petal petal-2" />
+        <span className="ambient-petal petal-3" />
+      </div>
       <div className="access-hero" aria-hidden="true">
+        <span className="hero-orbit hero-orbit-1" />
+        <span className="hero-orbit hero-orbit-2" />
         <span className="hero-kicker">RSVP</span>
         <span className="hero-line" />
         <span className="hero-date">Mariage</span>

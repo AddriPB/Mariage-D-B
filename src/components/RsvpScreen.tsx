@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
+import couple1 from '../assets/guest/couple-1.jpg'
+import couple2 from '../assets/guest/couple-2.jpg'
+import couple3 from '../assets/guest/couple-3.jpg'
+import couple4 from '../assets/guest/couple-4.jpg'
 import type { Guest, RsvpPayload } from '../types/guest'
 import { MAX_PEOPLE_PER_GUEST, validateRsvp } from '../utils/rsvp'
 
 type RsvpScreenProps = {
   guest: Guest
+  onOverlayChange?: (isVisible: boolean) => void
   onSubmit: (payload: RsvpPayload) => Promise<Guest>
   onBack: () => void
 }
@@ -16,7 +21,9 @@ const eventLabels: Array<{ key: keyof Pick<RsvpPayload, 'attendsCivil' | 'attend
   { key: 'attendsReception', label: 'Réception' },
 ]
 
-export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
+const celebrationPhotos = [couple1, couple2, couple3, couple4]
+
+export function RsvpScreen({ guest, onOverlayChange, onSubmit, onBack }: RsvpScreenProps) {
   const [form, setForm] = useState<RsvpPayload>({
     adultsCount: guest.adultsCount,
     attendsCivil: guest.attendsCivil,
@@ -32,10 +39,6 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
   const validationError = useMemo(() => validateRsvp(form), [form])
   const guestLabel = guest.displayName?.trim() || 'Votre invitation'
   const celebrationName = guest.displayName?.trim()
-  const confirmationText =
-    form.adultsCount === 1
-      ? 'Merci pour votre venue.'
-      : 'Merci pour votre venue à tous.'
   const selectedEvents = eventLabels
     .filter((event) => form[event.key])
     .map((event) => event.label)
@@ -46,10 +49,14 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
 
     const timeout = window.setTimeout(() => {
       setConfirmationState('done')
-    }, 1700)
+    }, 8200)
 
     return () => window.clearTimeout(timeout)
   }, [confirmationState])
+
+  useEffect(() => {
+    onOverlayChange?.(confirmationState !== 'idle')
+  }, [confirmationState, onOverlayChange])
 
   function updateNumber(value: string) {
     if (value === '') {
@@ -103,20 +110,11 @@ export function RsvpScreen({ guest, onSubmit, onBack }: RsvpScreenProps) {
 
   if (confirmationState === 'done') {
     return (
-      <section className="confirmation-screen" aria-live="polite" aria-labelledby="confirmation-title">
-        <div className="confirmation-screen-mark" aria-hidden="true">
-          ✓
-        </div>
-        <p className="eyebrow">RSVP confirmé</p>
-        <h1 id="confirmation-title">Réponse enregistrée</h1>
-        <p>Votre confirmation est bien sauvegardée.</p>
-        <p>{confirmationText}</p>
+      <section className="confirmation-screen final-photo-screen" aria-live="polite">
+        <img className="final-photo" src={couple4} alt="" aria-hidden="true" />
         <div className="confirmation-actions">
           <button type="button" onClick={() => setConfirmationState('idle')}>
             Modifier ma réponse
-          </button>
-          <button className="secondary on-dark" type="button" onClick={onBack}>
-            Changer de téléphone
           </button>
         </div>
       </section>
@@ -249,11 +247,26 @@ function Toggle({
 function CelebrationScreen({ guestName }: { guestName?: string }) {
   return (
     <section className="rsvp-celebration" aria-live="polite" aria-labelledby="celebration-title">
+      <div className="celebration-photo-reel" aria-hidden="true">
+        {celebrationPhotos.map((photo, index) => (
+          <img
+            className={`celebration-photo celebration-photo-${index + 1}`}
+            src={photo}
+            alt=""
+            key={photo}
+          />
+        ))}
+      </div>
       <div className="celebration-stage" aria-hidden="true">
-        <span className="celebration-ring" />
-        <span className="celebration-ring celebration-ring-delayed" />
-        {Array.from({ length: 12 }, (_, index) => (
+        <span className="celebration-moon" />
+        <span className="celebration-ring ring-1" />
+        <span className="celebration-ring ring-2" />
+        <span className="celebration-ring ring-3" />
+        {Array.from({ length: 18 }, (_, index) => (
           <span className={`celebration-spark spark-${index + 1}`} key={index} />
+        ))}
+        {Array.from({ length: 8 }, (_, index) => (
+          <span className={`celebration-floating-heart floating-heart-${index + 1}`} key={`heart-${index}`} />
         ))}
       </div>
       <p className="eyebrow">Réponse sauvegardée</p>

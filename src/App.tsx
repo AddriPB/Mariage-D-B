@@ -11,6 +11,7 @@ function App() {
   const [guests, setGuests] = useState<Guest[]>(() => getInitialGuestsSnapshot())
   const [session, setSession] = useState<AccessSession | null>(null)
   const [currentGuest, setCurrentGuest] = useState<Guest | null>(null)
+  const [isGuestRsvpOverlayVisible, setIsGuestRsvpOverlayVisible] = useState(false)
 
   async function refreshGuests() {
     const nextGuests = await guestStorage.listGuests()
@@ -24,6 +25,7 @@ function App() {
     const visitedGuest = await guestStorage.markVisited(guest.id)
     setSession({ kind: 'guest', phone: visitedGuest.normalizedPhone, guestId: visitedGuest.id })
     setCurrentGuest({ ...visitedGuest })
+    setIsGuestRsvpOverlayVisible(false)
   }
 
   async function handleAdminAccess(admin: AdminProfile) {
@@ -45,6 +47,7 @@ function App() {
     setGuests([...nextGuests])
     setSession({ kind: 'admin', phone: admin.phone, guestId: admin.uid })
     setCurrentGuest(null)
+    setIsGuestRsvpOverlayVisible(false)
   }
 
   async function handleRsvpSubmit(payload: RsvpPayload) {
@@ -79,13 +82,15 @@ function App() {
 
       {session?.kind === 'guest' && currentGuest && (
         <>
-          <InvitationSection />
+          {!isGuestRsvpOverlayVisible && <InvitationSection />}
           <RsvpScreen
             guest={currentGuest}
+            onOverlayChange={setIsGuestRsvpOverlayVisible}
             onSubmit={handleRsvpSubmit}
             onBack={() => {
               setSession(null)
               setCurrentGuest(null)
+              setIsGuestRsvpOverlayVisible(false)
             }}
           />
         </>

@@ -9,6 +9,10 @@ type EventDetailsProps = {
 }
 
 function EventDetails({ title, time, location, address }: EventDetailsProps) {
+  const shouldShowLocation =
+    location.trim().toLowerCase() !== title.trim().toLowerCase()
+    && location.trim().toLowerCase() !== 'mairie de champigny-sur-marne'
+
   return (
     <article className="event-details">
       <div className="event-time" aria-label={`Horaire ${title}`}>
@@ -16,7 +20,7 @@ function EventDetails({ title, time, location, address }: EventDetailsProps) {
       </div>
       <div className="event-copy">
         <h3>{title}</h3>
-        <p>{location}</p>
+        {shouldShowLocation && <p>{location}</p>}
         <address>{address}</address>
       </div>
     </article>
@@ -38,6 +42,14 @@ export function InvitationSection() {
 
   return (
     <section className="invitation-panel" aria-labelledby="invitation-title">
+      <div className="guest-ambient guest-ambient-form" aria-hidden="true">
+        <span className="ambient-glow ambient-glow-1" />
+        <span className="ambient-glow ambient-glow-2" />
+        <span className="ambient-heart heart-1" />
+        <span className="ambient-heart heart-2" />
+        <span className="ambient-petal petal-1" />
+        <span className="ambient-petal petal-2" />
+      </div>
       <div className="invitation-heading">
         <p className="eyebrow">Célébration</p>
         <h2 id="invitation-title">{weddingContent.coupleNames}</h2>
