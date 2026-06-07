@@ -23,6 +23,7 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
     : isAdminPasswordStep
       ? 'Ouvrir le dashboard'
       : 'Continuer'
+  const accessScreenClassName = `access-screen guest-flow-enter ${error ? 'has-form-error' : ''}`
 
   function resetAdminStep() {
     setAdminPhone('')
@@ -100,16 +101,23 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
   }
 
   return (
-    <section className="access-screen" aria-labelledby="access-title">
+    <section className={accessScreenClassName} aria-labelledby="access-title">
       <div className="guest-ambient guest-ambient-access" aria-hidden="true">
+        <span className="ambient-blob blob-1" />
+        <span className="ambient-blob blob-2" />
+        <span className="ambient-blob blob-3" />
         <span className="ambient-glow ambient-glow-1" />
         <span className="ambient-glow ambient-glow-2" />
         <span className="ambient-heart heart-1" />
         <span className="ambient-heart heart-2" />
         <span className="ambient-heart heart-3" />
+        <span className="ambient-heart heart-4" />
+        <span className="ambient-heart heart-5" />
         <span className="ambient-petal petal-1" />
         <span className="ambient-petal petal-2" />
         <span className="ambient-petal petal-3" />
+        <span className="ambient-petal petal-4" />
+        <span className="ambient-petal petal-5" />
       </div>
       <div className="access-hero" aria-hidden="true">
         <span className="hero-orbit hero-orbit-1" />
@@ -134,11 +142,12 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
           </div>
         )}
 
-        <form className="stack" onSubmit={handleAccessSubmit} aria-busy={isLoading}>
+        <form className="stack guest-form-stack" onSubmit={handleAccessSubmit} aria-busy={isLoading}>
           <label htmlFor="guest-phone">
             Téléphone
             <input
               id="guest-phone"
+              className={error ? 'has-error' : undefined}
               inputMode="tel"
               autoComplete="tel"
               value={phone}
@@ -155,6 +164,7 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
             Mot de passe admin
             <input
               id="admin-password"
+              className={error ? 'has-error' : undefined}
               type="password"
               autoComplete="current-password"
               value={password}
@@ -165,8 +175,8 @@ export function AccessScreen({ onGuestAccess, onAdminAccess, findByPhone, sessio
           </label>
         )}
           <div className="form-actions">
-            <button className="primary-action" disabled={isLoading} type="submit">
-              {submitLabel}
+            <button className={`primary-action liquid-cta ${isLoading ? 'is-loading' : ''}`} disabled={isLoading} type="submit">
+              <span>{submitLabel}</span>
             </button>
           </div>
         </form>

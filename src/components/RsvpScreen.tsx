@@ -21,7 +21,8 @@ const eventLabels: Array<{ key: keyof Pick<RsvpPayload, 'attendsCivil' | 'attend
 ]
 
 const celebrationPhotos = [couple1, couple2, couple3, couple4]
-const thankYouMessage = 'En vous remerciant de votre présence'
+const thankYouLines = ['En vous remerciant', 'votre présence']
+const thankYouMessage = thankYouLines.join('\n')
 
 export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps) {
   const [form, setForm] = useState<RsvpPayload>({
@@ -35,6 +36,8 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
   const [showValidationError, setShowValidationError] = useState(false)
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>('idle')
   const [isSaving, setIsSaving] = useState(false)
+  const [adultsPulseKey, setAdultsPulseKey] = useState(0)
+  const [changedEventKey, setChangedEventKey] = useState<string | null>(null)
 
   const validationError = useMemo(() => validateRsvp(form), [form])
   const selectedEvents = eventLabels
@@ -56,6 +59,14 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
     onOverlayChange?.(confirmationState !== 'idle')
   }, [confirmationState, onOverlayChange])
 
+  useEffect(() => {
+    if (confirmationState === 'idle') return
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [confirmationState])
+
   function updateNumber(value: string) {
     if (value === '') {
       setAdultsInput('')
@@ -68,6 +79,7 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
     const normalizedValue = Number.isNaN(nextValue) ? 0 : nextValue
     setAdultsInput(String(normalizedValue))
     setForm((current) => ({ ...current, adultsCount: normalizedValue }))
+    setAdultsPulseKey((current) => current + 1)
     setError('')
   }
 
@@ -75,7 +87,19 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
     const nextAdultsCount = Math.min(MAX_PEOPLE_PER_GUEST, Math.max(0, form.adultsCount + delta))
     setAdultsInput(String(nextAdultsCount))
     setForm((current) => ({ ...current, adultsCount: nextAdultsCount }))
+    setAdultsPulseKey((current) => current + 1)
     setError('')
+  }
+
+  function updateAttendance(
+    eventKey: keyof Pick<RsvpPayload, 'attendsCivil' | 'attendsReligious' | 'attendsReception'>,
+    checked: boolean,
+  ) {
+    setForm((current) => ({ ...current, [eventKey]: checked }))
+    setChangedEventKey(eventKey)
+    window.setTimeout(() => {
+      setChangedEventKey((current) => current === eventKey ? null : current)
+    }, 420)
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -116,9 +140,9 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
   }
 
   return (
-    <section className="surface-panel rsvp-panel" aria-label="Formulaire RSVP">
-      <form className="stack" onSubmit={handleSubmit} aria-busy={isSaving}>
-        <div className="form-block">
+    <section className={`surface-panel rsvp-panel guest-flow-enter ${error || (showValidationError && validationError) ? 'has-form-error' : ''}`} aria-label="Formulaire RSVP">
+      <form className="stack guest-form-stack" onSubmit={handleSubmit} aria-busy={isSaving}>
+        <div className="form-block reveal-section reveal-section-1">
           <label htmlFor="adults-count">Nombre d'adultes présents</label>
           <div className="number-control">
             <button
@@ -132,6 +156,7 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
             </button>
             <input
               id="adults-count"
+              className={`adults-count-input count-pulse-${adultsPulseKey % 2}`}
               min="0"
               max={MAX_PEOPLE_PER_GUEST}
               inputMode="numeric"
@@ -152,19 +177,20 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
           </div>
         </div>
 
-        <fieldset className="attendance-fieldset">
+        <fieldset className="attendance-fieldset reveal-section reveal-section-2">
           <legend>Présences</legend>
           {eventLabels.map((event) => (
             <Toggle
               key={event.key}
               label={event.label}
               checked={form[event.key]}
-              onChange={(checked) => setForm((current) => ({ ...current, [event.key]: checked }))}
+              justChanged={changedEventKey === event.key}
+              onChange={(checked) => updateAttendance(event.key, checked)}
             />
           ))}
         </fieldset>
 
-        <div className="recap">
+        <div className="recap reveal-section reveal-section-3">
           <h2>Récapitulatif</h2>
           <dl>
             <div>
@@ -188,8 +214,8 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
             {validationError}
           </p>
         )}
-        <button className="primary-action" disabled={isSaving} type="submit">
-          {isSaving ? 'Enregistrement...' : 'Valider ma réponse'}
+        <button className={`primary-action liquid-cta ${isSaving ? 'is-loading' : ''}`} disabled={isSaving} type="submit">
+          <span>{isSaving ? 'Enregistrement...' : 'Valider ma réponse'}</span>
         </button>
       </form>
     </section>
@@ -199,14 +225,16 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
 function Toggle({
   label,
   checked,
+  justChanged,
   onChange,
 }: {
   label: string
   checked: boolean
+  justChanged: boolean
   onChange: (checked: boolean) => void
 }) {
   return (
-    <label className={`toggle-row ${checked ? 'is-checked' : ''}`}>
+    <label className={`toggle-row ${checked ? 'is-checked' : ''} ${justChanged ? 'just-changed' : ''}`}>
       <input
         className="toggle-input"
         type="checkbox"
@@ -229,19 +257,27 @@ function HandwrittenThanks() {
 
   return (
     <p className="handwritten-thanks" aria-label={thankYouMessage}>
-      {thankYouMessage.split(' ').map((word, wordIndex) => (
-        <span className="handwritten-word" aria-hidden="true" key={`${word}-${wordIndex}`}>
-          {Array.from(word).map((character) => {
-            const index = characterIndex
-            characterIndex += 1
+      {thankYouLines.map((line, lineIndex) => (
+        <span className="handwritten-line" aria-hidden="true" key={line}>
+          {line.split(' ').map((word, wordIndex, words) => {
+            const trailingSpace = wordIndex < words.length - 1 ? ' ' : ''
 
             return (
-              <span
-                className="handwritten-character"
-                key={`${character}-${wordIndex}-${index}`}
-                style={{ '--character-index': index } as CSSProperties}
-              >
-                {character}
+              <span className="handwritten-word" key={`${word}-${lineIndex}-${wordIndex}`}>
+                {Array.from(`${word}${trailingSpace}`).map((character) => {
+                  const index = characterIndex
+                  characterIndex += 1
+
+                  return (
+                    <span
+                      className="handwritten-character"
+                      key={`${character}-${lineIndex}-${wordIndex}-${index}`}
+                      style={{ '--character-index': index } as CSSProperties}
+                    >
+                      {character === ' ' ? '\u00A0' : character}
+                    </span>
+                  )
+                })}
               </span>
             )
           })}

@@ -180,8 +180,12 @@ export function InvitationSection() {
         <span className="ambient-glow ambient-glow-2" />
         <span className="ambient-heart heart-1" />
         <span className="ambient-heart heart-2" />
+        <span className="ambient-heart heart-3" />
+        <span className="ambient-heart heart-4" />
         <span className="ambient-petal petal-1" />
         <span className="ambient-petal petal-2" />
+        <span className="ambient-petal petal-3" />
+        <span className="ambient-petal petal-4" />
       </div>
       <div className="invitation-heading">
         <p className="eyebrow">Célébration</p>
