@@ -2,7 +2,7 @@ import { demoGuests } from './demoGuests'
 import { shouldUseFirebaseStorage } from '../firebase'
 import type { Guest, GuestDraft, RsvpPayload } from '../types/guest'
 import { normalizePhone } from '../utils/phone'
-import { validateRsvp } from '../utils/rsvp'
+import { validateGuestRsvp, validateRsvp } from '../utils/rsvp'
 import { firestoreGuestStorage } from './firestoreStorage'
 
 const STORAGE_KEY = 'mariage-daima.guests.v1'
@@ -110,7 +110,7 @@ export const localGuestStorage: GuestStorage = {
   },
 
   async submitRsvp(guestId, payload) {
-    const error = validateRsvp(payload)
+    const error = validateGuestRsvp(payload)
     if (error) throw new Error(error)
 
     const timestamp = nowIso()

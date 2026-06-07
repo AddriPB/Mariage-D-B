@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateRsvp } from './rsvp'
+import { validateGuestRsvp, validateRsvp } from './rsvp'
 
 describe('validateRsvp', () => {
   it('accepte un RSVP de 20 adultes maximum', () => {
@@ -22,5 +22,27 @@ describe('validateRsvp', () => {
         attendsReception: true,
       }),
     ).toContain('20')
+  })
+
+  it('refuse une validation invitée avec 0 adulte', () => {
+    expect(
+      validateGuestRsvp({
+        adultsCount: 0,
+        attendsCivil: true,
+        attendsReligious: true,
+        attendsReception: true,
+      }),
+    ).toContain('au moins un invité')
+  })
+
+  it('autorise encore une fiche admin à 0 adulte', () => {
+    expect(
+      validateRsvp({
+        adultsCount: 0,
+        attendsCivil: false,
+        attendsReligious: false,
+        attendsReception: false,
+      }),
+    ).toBeNull()
   })
 })

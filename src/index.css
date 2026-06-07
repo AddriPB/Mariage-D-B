@@ -1215,16 +1215,16 @@ small {
 
 .handwritten-thanks {
   position: absolute;
-  top: max(2rem, env(safe-area-inset-top));
+  top: max(2.25rem, env(safe-area-inset-top));
   left: 50%;
   z-index: 3;
   width: min(100% - 2rem, 680px);
   margin: 0;
   color: white;
   font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-  font-size: clamp(1.45rem, 4.6vw, 3rem);
+  font-size: clamp(1.8rem, 5.8vw, 3.7rem);
   font-weight: 700;
-  line-height: 1.28;
+  line-height: 1.2;
   letter-spacing: 0;
   text-align: center;
   text-shadow:

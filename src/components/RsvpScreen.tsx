@@ -4,7 +4,7 @@ import couple2 from '../assets/guest/couple-2.jpg'
 import couple3 from '../assets/guest/couple-3.jpg'
 import couple4 from '../assets/guest/couple-4.jpg'
 import type { Guest, RsvpPayload } from '../types/guest'
-import { MAX_PEOPLE_PER_GUEST, validateRsvp } from '../utils/rsvp'
+import { MAX_PEOPLE_PER_GUEST, validateGuestRsvp } from '../utils/rsvp'
 
 type RsvpScreenProps = {
   guest: Guest
@@ -21,7 +21,7 @@ const eventLabels: Array<{ key: keyof Pick<RsvpPayload, 'attendsCivil' | 'attend
 ]
 
 const celebrationPhotos = [couple1, couple2, couple3, couple4]
-const thankYouLines = ['En vous remerciant', 'votre présence']
+const thankYouLines = ['En vous remerciant de', 'votre présence']
 const thankYouMessage = thankYouLines.join('\n')
 
 export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps) {
@@ -39,7 +39,7 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
   const [adultsPulseKey, setAdultsPulseKey] = useState(0)
   const [changedEventKey, setChangedEventKey] = useState<string | null>(null)
 
-  const validationError = useMemo(() => validateRsvp(form), [form])
+  const validationError = useMemo(() => validateGuestRsvp(form), [form])
   const selectedEvents = eventLabels
     .filter((event) => form[event.key])
     .map((event) => event.label)
@@ -107,7 +107,7 @@ export function RsvpScreen({ guest, onOverlayChange, onSubmit }: RsvpScreenProps
     setError('')
     setConfirmationState('idle')
 
-    const localError = validateRsvp(form)
+    const localError = validateGuestRsvp(form)
     if (localError) {
       setShowValidationError(true)
       setError(localError)

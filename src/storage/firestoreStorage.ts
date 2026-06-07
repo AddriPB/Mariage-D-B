@@ -7,7 +7,7 @@ import {
 } from '../firebase'
 import type { Guest, RsvpPayload } from '../types/guest'
 import { normalizePhone } from '../utils/phone'
-import { validateRsvp } from '../utils/rsvp'
+import { validateGuestRsvp, validateRsvp } from '../utils/rsvp'
 import type { GuestStorage } from './guestStorage'
 
 function nowIso(): string {
@@ -123,7 +123,7 @@ export const firestoreGuestStorage: GuestStorage = {
   },
 
   async submitRsvp(guestId, payload) {
-    const error = validateRsvp(payload)
+    const error = validateGuestRsvp(payload)
     if (error) throw new Error(error)
 
     const guest = await readGuestById(guestId)

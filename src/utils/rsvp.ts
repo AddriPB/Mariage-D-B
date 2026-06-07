@@ -14,6 +14,17 @@ export function validateRsvp(payload: RsvpPayload): string | null {
   return null
 }
 
+export function validateGuestRsvp(payload: RsvpPayload): string | null {
+  const rsvpError = validateRsvp(payload)
+  if (rsvpError) return rsvpError
+
+  if (payload.adultsCount < 1) {
+    return "Indiquez au moins un invité présent avant de valider."
+  }
+
+  return null
+}
+
 export function getGuestDisplayName(guest: Guest): string {
   return guest.displayName?.trim() || guest.phone
 }
